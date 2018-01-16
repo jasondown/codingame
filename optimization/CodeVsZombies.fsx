@@ -1,5 +1,5 @@
 // https://www.codingame.com/multiplayer/optimization/code-vs-zombies
-
+//-------------------------------------------------------------------
 (* Save humans, destroy zombies! *)
 open System
 
