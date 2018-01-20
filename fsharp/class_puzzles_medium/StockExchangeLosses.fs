@@ -7,7 +7,8 @@ open System
 let mutable j = -1
 
 let setval p =
-    if j < p then j <- p else j <- j |> ignore
+    if j < p then j <- p else j <- j 
+    |> ignore
     j
 
 let getMaxLoss values =  
