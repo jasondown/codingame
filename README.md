@@ -9,13 +9,13 @@ Various different languages (focusing mainly on .Net initially).
 
 #### Classic Puzzle - Easy (F#)
 
-* [Defibrillators](https://www.codingame.com/training/easy/defibrillators)
-* [Chuck Norris](https://www.codingame.com/training/easy/chuck-norris)
+* [ ] [Defibrillators](https://www.codingame.com/training/easy/defibrillators)
+* [ ] [Chuck Norris](https://www.codingame.com/training/easy/chuck-norris)
 
 #### Classic Puzzle - Easy (C#)
 
 * [x] [The Descent](https://www.codingame.com/training/easy/the-descent)
-* [Temperatures](https://www.codingame.com/training/easy/temperatures)
+* [ ] [Temperatures](https://www.codingame.com/training/easy/temperatures)
 
 
 ----
