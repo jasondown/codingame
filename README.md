@@ -14,7 +14,7 @@ Various different languages (focusing mainly on .Net initially).
 
 #### Classic Puzzle - Easy (C#)
 
-* [The Descent](https://www.codingame.com/training/easy/the-descent)
+* [x] [The Descent](https://www.codingame.com/training/easy/the-descent)
 * [Temperatures](https://www.codingame.com/training/easy/temperatures)
 
 
