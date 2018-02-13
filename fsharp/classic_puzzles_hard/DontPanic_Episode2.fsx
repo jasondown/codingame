@@ -5,11 +5,13 @@ open System
 type Direction =
     | Left
     | Right
+    | Build
     | Unknown
     override x.ToString() =
         match x with
         | Left -> "LEFT"
         | Right -> "RIGHT"
+        | Build -> "ELEVATOR"
         | Unknown -> ""
 
 let getDirection dir =
@@ -54,6 +56,8 @@ type LevelDetails =
             x.TotalElevators
             )
 
+let mutable elevatorsBuilt = 0
+
 let readNLines n = List.init n (fun _ -> Console.ReadLine())
 
 let getElevators n =
@@ -83,8 +87,15 @@ let getTargetDirection targetPos clone =
     | TargetSame -> Direction.Unknown
 
 let getElevatorDirection (clone : Clone) level =
-    let elevator = level.Elevators.[clone.Floor]
-    getTargetDirection elevator.Position clone
+    Console.Error.WriteLine(sprintf "%A" level.Elevators)
+    Console.Error.WriteLine(sprintf "%i" elevatorsBuilt)
+    match level.Elevators |> List.tryFind (fun e -> e.Floor = clone.Floor) with
+    | Some e -> getTargetDirection e.Position clone
+    | None   -> if elevatorsBuilt < level.AdditionalElevators 
+                then 
+                    elevatorsBuilt <- elevatorsBuilt + 1 
+                    Direction.Build
+                else Direction.Unknown
     
 let getExitDirection (clone : Clone) level =
     getTargetDirection level.ExitPos clone
@@ -99,11 +110,13 @@ let getMovementDirection (clone : Clone) level =
 
 type MoveAction =
     | Wait
-    | Block    
+    | Block
+    | Build
 
 let getMoveAction (clone : Clone) direction =
     match clone.Direction, direction with
     | _, d when d = Direction.Unknown -> Wait
+    | _, d when d = Direction.Build -> Build
     | c, d when c = d -> Wait
     | _ -> Block
 
@@ -111,6 +124,7 @@ let writeMoveAction move =
     match move with
     | Wait -> printfn "WAIT"
     | Block -> printfn "BLOCK"
+    | Build -> printfn "ELEVATOR"
 
 (* nbFloors: number of floors *)
 (* width: width of the area *)
@@ -118,11 +132,11 @@ let writeMoveAction move =
 (* exitFloor: floor on which the exit is found *)
 (* exitPos: position of the exit on its floor *)
 (* nbTotalClones: number of generated clones *)
-(* nbAdditionalElevators: ignore (always zero) *)
+(* nbAdditionalElevators: *)
 (* nbElevators: number of elevators *)
 let levelInput = (Console.In.ReadLine()).Split [|' '|]
 
-let level =
+let mutable level =
     { Floors = int(levelInput.[0])
       Width = int(levelInput.[1])
       Rounds = int(levelInput.[2])
@@ -132,7 +146,6 @@ let level =
       AdditionalElevators = int(levelInput.[6])
       TotalElevators = int(levelInput.[7])
       Elevators = getElevators (int(levelInput.[7]))}
-    
 
 (* game loop *)
 while true do
@@ -144,5 +157,15 @@ while true do
     let leadClone = { Floor = int(turnInput.[0]); Position = int(turnInput.[1]); Direction = getDirection turnInput.[2] }
     
     let moveAction = getMovementDirection leadClone >> getMoveAction leadClone
-    level |> moveAction |> writeMoveAction
+
+    let ma = level |> moveAction
+    writeMoveAction ma
+
+    // So ugly
+    match ma with
+    | MoveAction.Build -> 
+        level <- 
+            ({ level with Elevators = level.Elevators @ [{ Floor = leadClone.Floor; Position = leadClone.Position }] })
+    | _ -> ()
+
     ()
