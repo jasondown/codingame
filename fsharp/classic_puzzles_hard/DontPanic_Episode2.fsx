@@ -1,4 +1,4 @@
-// https://www.codingame.com/training/medium/don't-panic-episode-1
+// https://www.codingame.com/training/hard/don't-panic-episode-2
 
 open System
 
