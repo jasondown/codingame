@@ -1,6 +1,7 @@
 // https://www.codingame.com/training/hard/don't-panic-episode-2
 
 open System
+open System.Windows.Forms
 
 type Direction =
     | Left
@@ -87,9 +88,15 @@ let getTargetDirection targetPos clone =
     | TargetSame -> Direction.Unknown
 
 let getElevatorDirection (clone : Clone) level =
-    Console.Error.WriteLine(sprintf "%A" level.Elevators)
-    Console.Error.WriteLine(sprintf "%i" elevatorsBuilt)
-    match level.Elevators |> List.tryFind (fun e -> e.Floor = clone.Floor) with
+    //Console.Error.WriteLine(sprintf "%A" level.Elevators)
+    //Console.Error.WriteLine(sprintf "%i" elevatorsBuilt)
+    let currentFloorElevator =
+        level.Elevators 
+        |> List.filter (fun e -> e.Floor = clone.Floor)
+        |> List.sortBy (fun e -> abs (e.Position - clone.Position))
+        |> List.tryHead
+
+    match currentFloorElevator with
     | Some e -> getTargetDirection e.Position clone
     | None   -> if elevatorsBuilt < level.AdditionalElevators 
                 then 
@@ -156,6 +163,8 @@ while true do
     
     let leadClone = { Floor = int(turnInput.[0]); Position = int(turnInput.[1]); Direction = getDirection turnInput.[2] }
     
+    Console.Error.WriteLine(sprintf "%A" level)
+
     let moveAction = getMovementDirection leadClone >> getMoveAction leadClone
 
     let ma = level |> moveAction
