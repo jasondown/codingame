@@ -1,7 +1,6 @@
 // https://www.codingame.com/training/hard/don't-panic-episode-2
 
 open System
-open System.Windows.Forms
 
 type Direction =
     | Left
