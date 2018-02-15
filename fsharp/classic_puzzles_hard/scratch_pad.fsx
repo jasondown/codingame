@@ -1,18 +1,8 @@
-type 'a Tree =
-    | Empty
-    | Branch of 'a * 'a Tree * 'a Tree
+open System
 
-let rec bfs = function
-    | [] -> []
-    | Empty :: trees -> bfs trees
-    | Branch (x, left, right) :: trees -> x :: bfs [ yield! trees; yield left; yield right ]
+type Vertex =
+    | Label of string
 
-let breadthFirstSearch tr = bfs [tr]
+type Edge = (Vertex * Vertex) * double
 
-let tree1 = Branch ('a', Branch ('b', Branch ('d', Empty, Empty),
-                               Branch ('e', Empty, Empty)),
-                         Branch ('c', Empty,
-                               Branch ('f', Branch ('g', Empty, Empty),
-                                           Empty))) 
-
-printfn "%A" (breadthFirstSearch tree1)
+type Graph = Set<Vertex> * Set<Vertex>
