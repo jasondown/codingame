@@ -4,6 +4,7 @@
 //
 // Data -> Data Structure
 //----------------------- 
+// Also need a graph data structure (will likely convert from Java or perhaps Python Pluralsight course)
 // Distance Table -> 3-column array
 // Backtracking -> Stack
 // Enqueuing neighbours -> Priority queue
@@ -61,3 +62,15 @@ module PriorityQueue =
             pq.[N+1] <- Unchecked.defaultof<'T>
             sink 1
             max                 
+open PriorityQueue
+
+//test
+module test =
+
+    let pq = new PriorityQueue<int> 5
+    pq.Insert 3
+    pq.Insert 5
+    pq.Insert 2
+    pq.Insert 1
+    pq.DelMax ()
+    printfn "%i" pq.Size
