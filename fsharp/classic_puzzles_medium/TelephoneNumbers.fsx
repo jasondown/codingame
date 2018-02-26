@@ -2,13 +2,21 @@
 
 open System
 
-let readNLines n = Seq.init n (fun _ -> Console.ReadLine())
-
-let totalNums = Console.ReadLine() |> int
+let readNLines n = Array.init n (fun _ -> Console.ReadLine())
 let phoneNumbers = 
-    readNLines totalNums
-    |> Seq.sortBy id
+    readNLines (int <| Console.ReadLine())
+    |> Array.sortBy id
+
+let commonLeadingSubstringLength (s : string * string) =
+    let s1 = (fst s).ToCharArray()
+    let s2 = (snd s).ToCharArray()
+    s2.Length - (Seq.zip s1 s2
+                 |> Seq.takeWhile (fun x -> fst x = snd x)
+                 |> Seq.length)
 
 let nodes =
-    let numbers = Seq.skip 1 phoneNumbers
-    let zipped = Seq.zip numbers Tuple.Create
+    (Array.head phoneNumbers).Length + 
+    (Array.pairwise phoneNumbers
+    |> Array.sumBy commonLeadingSubstringLength)
+    
+printfn "%i" nodes
