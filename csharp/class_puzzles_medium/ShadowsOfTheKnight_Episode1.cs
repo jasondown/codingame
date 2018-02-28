@@ -9,7 +9,7 @@ class Player
         int height = int.Parse(inputs[1]);
 
         // Max turns
-        var ignored= int.Parse(Console.ReadLine());
+        var ignored = int.Parse(Console.ReadLine());
 
         inputs = Console.ReadLine().Split(' ');
         var x = int.Parse(inputs[0]);
