@@ -5,16 +5,14 @@ open System
 type Building = {X : int64; Y: int64}
 
 let getMainLineY buildings = 
-    let medianYBuilding = 
-        buildings 
-        |> Array.sortBy (fun b -> b.Y)
-        |> Array.item ((buildings.Length - 1) / 2)
-    medianYBuilding.Y    
+    buildings 
+    |> Array.sortBy (fun b -> b.Y)
+    |> Array.item ((buildings.Length - 1) / 2)  
     
 let getTotalYLengths buildings =
     let mainLineY = buildings |> getMainLineY
     buildings
-    |> Array.fold (fun total b -> total + Math.Abs (mainLineY - b.Y)) 0L
+    |> Array.fold (fun total b -> total + Math.Abs (mainLineY.Y - b.Y)) 0L
 
 let getMainLineLength buildings =
     let minX = buildings |> Array.minBy (fun b -> b.X) 
@@ -28,9 +26,8 @@ let getBuildings numBuildings =
     Array.init numBuildings (fun _ -> Console.ReadLine())
     |> Array.map (fun l ->
         let token = l.Split ' '
-        { X = int64 <| token.[0]
-          Y = int64 <| token.[1] })
-    |> Array.sortByDescending (fun b -> b.X)
+        { X = int64 token.[0]
+          Y = int64 token.[1] })
 
 let getRequiredCableLength = getBuildings >> getTotalLength
 
