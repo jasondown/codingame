@@ -12,14 +12,9 @@ let getMainLineY buildings =
     medianYBuilding.Y    
     
 let getTotalYLengths buildings =
-    let mainLine = buildings |> getMainLineY
+    let mainLineY = buildings |> getMainLineY
     buildings
-    |> Array.fold (fun total b -> 
-        total + 
-        (match b.Y with
-         | y when y > mainLine -> Math.Abs(mainLine - y)
-         | y when y < mainLine -> Math.Abs(y - mainLine)
-         | _ -> 0L)) 0L
+    |> Array.fold (fun total b -> total + Math.Abs (mainLineY - b.Y)) 0L
 
 let getMainLineLength buildings =
     let minX = buildings |> Array.minBy (fun b -> b.X) 
@@ -32,7 +27,7 @@ let getTotalLength buildings =
 let getBuildings numBuildings = 
     Array.init numBuildings (fun _ -> Console.ReadLine())
     |> Array.map (fun l ->
-        let token = l.Split[|' '|]
+        let token = l.Split ' '
         { X = int64 <| token.[0]
           Y = int64 <| token.[1] })
     |> Array.sortByDescending (fun b -> b.X)
