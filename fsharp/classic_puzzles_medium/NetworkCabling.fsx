@@ -43,8 +43,8 @@ let getBuildings num =
     |> List.map (fun l ->
         let token = l.Split[|' '|]
         { X = int64(token.[0]); Y = int64(token.[1]) })
-    |> List.sortBy (fun b -> b.X)
-    |> List.rev
+    |> List.sortByDescending (fun b -> b.X)
+    //|> List.rev
 
 // Main Logic
 Console.ReadLine()
