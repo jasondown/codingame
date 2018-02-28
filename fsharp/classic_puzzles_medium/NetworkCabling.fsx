@@ -47,8 +47,8 @@ let getBuildings num =
     |> List.rev
 
 // Main Logic
-let numBuildings = int <| Console.In.ReadLine()
-
-let buildings = numBuildings |> getBuildings
-
-printfn "%i" (buildings |> getTotalLength)
+Console.ReadLine()
+|> int
+|> getBuildings 
+|> getTotalLength 
+|> printfn "%i"
