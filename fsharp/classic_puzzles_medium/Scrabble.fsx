@@ -15,7 +15,7 @@ let pointValues =
 let readNLines n = Array.init n (fun _ -> Console.ReadLine())
 
 let getWordsAndLetters wordCount =
-    let words = readNLines (wordCount - 1)
+    let words = readNLines wordCount
     let letters = readNLines 1 |> Array.head
     let validWords =
         words
