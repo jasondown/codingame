@@ -13,6 +13,7 @@ Notes about Botters of the Galaxy (not adding code to the repository until after
       * HeroType
       * Unit
       * RoundType
+      * Move
    * Parsing
       * Entities
       * Items
