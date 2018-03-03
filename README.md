@@ -55,7 +55,7 @@ My various solutions to [Codingame](https://www.codingame.com) puzzles.
   - [ ] Scala
 - [Shadows of the Knight - Episode 1](https://www.codingame.com/training/medium/shadows-of-the-knight-episode-1)
   - [ ] F#
-  - [ ] [C#](https://github.com/jasondown/codingame/blob/master/csharp/classic_puzzles_medium/ShadowsOfTheKnight_Episode1.cs)
+  - [x] [C#](https://github.com/jasondown/codingame/blob/master/csharp/classic_puzzles_medium/ShadowsOfTheKnight_Episode1.cs)
   - [ ] Scala
 - [Don't Panic - Episode 1](https://www.codingame.com/training/medium/don't-panic-episode-1)
   - [x] [F#](https://github.com/jasondown/codingame/blob/master/fsharp/classic_puzzles_medium/DontPanic.fsx)
