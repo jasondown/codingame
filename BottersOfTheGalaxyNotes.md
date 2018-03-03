@@ -5,3 +5,4 @@ Notes about Botters of the Galaxy (not adding code to the repository until after
 
 * Day 1
     * Added Entity types, supporting types and parsing code.
+    * Added Item types and parsing code.
