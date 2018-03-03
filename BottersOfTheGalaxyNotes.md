@@ -23,3 +23,5 @@ Notes about Botters of the Galaxy (not adding code to the repository until after
       * read() (for Console.ReadLine())
       * readInt (for reading ints from the console)
       * readLines (read N lines from the console)
+      * getUnitType
+      * getHeroType
