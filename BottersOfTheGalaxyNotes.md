@@ -4,5 +4,22 @@ Botters of the Galaxy
 Notes about Botters of the Galaxy (not adding code to the repository until after the competition).
 
 * Day 1
-    * Added Entity types, supporting types and parsing code.
-    * Added Item types and parsing code.
+   * Types
+      * EntityType
+      * Point
+      * Entity
+      * Item
+      * UnitType
+      * HeroType
+      * Unit
+      * RoundType
+   * Parsing
+      * Entities
+      * Items
+      * Units
+      * Gold
+      * Team
+   * Helper Functions
+      * read() (for Console.ReadLine())
+      * readInt (for reading ints from the console)
+      * readLines (read N lines from the console)
