@@ -3,7 +3,7 @@ Botters of the Galaxy
 
 Notes about Botters of the Galaxy (not adding code to the repository until after the competition).
 
-* Day 1 **Beat Wood League 3**
+* Day 1 **Beat Wood League 3 (Achieved)**
    * Types
       * EntityType
       * Point
