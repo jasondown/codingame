@@ -30,7 +30,7 @@ Notes about Botters of the Galaxy (not adding code to the repository until after
       * Back off 25 behind front unit.
       * If enemy hero is in attack range, attack them.
       * Else attack nearest enemy unit.
-* Day 2 **Beat Wood League 2 (Not Achieved Yet)**
+* Day 2 **Beat Wood League 2 (Achieved)**
   * Types
     * Move now has PickHero type
     * Move now has Buy type
@@ -40,7 +40,8 @@ Notes about Botters of the Galaxy (not adding code to the repository until after
     * sellItem
     * buyPotion
   * Strategy
-    * Same as above, in addition:
-    * If health < 200, buy potion (may need to sell off slot first).
-    * If > attack range to enemy hero buy an item if enough gold and open slot.
-    * Items focused on health.
+    * Check if potion needed and available. Buy if necessary (may need to sell stuff first).
+    * Low health strategy (either potions, hide by tower or sell stuff to buy potions).
+    * Stay away from enemy tower.
+    * Don't attack enemy hero unless enemy units are low in numbers (prevent aggro attack).
+    * Buying items based on damage or health (decide based on hero health vs. enemy hero health).
