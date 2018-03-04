@@ -45,3 +45,6 @@ Notes about Botters of the Galaxy (not adding code to the repository until after
     * Stay away from enemy tower.
     * Don't attack enemy hero unless enemy units are low in numbers (prevent aggro attack).
     * Buying items based on damage or health (decide based on hero health vs. enemy hero health).
+* Day 2 con't **Beat Wood League 1 (Achieved)**
+  * Strategy
+    * Added ability to handle multiple heroes.
