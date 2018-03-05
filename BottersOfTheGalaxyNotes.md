@@ -3,7 +3,7 @@ Botters of the Galaxy
 
 Notes about Botters of the Galaxy (not adding code to the repository until after the competition).
 
-* Day 1 **Beat Wood League 3 (Achieved)**
+* Day 1 **Goal: Beat Wood League 3 (Achieved)**
    * Types
       * EntityType
       * Point
@@ -30,7 +30,7 @@ Notes about Botters of the Galaxy (not adding code to the repository until after
       * Back off 25 behind front unit.
       * If enemy hero is in attack range, attack them.
       * Else attack nearest enemy unit.
-* Day 2 **Beat Wood League 2 (Achieved)**
+* Day 2 **Goal: Beat Wood League 2 (Achieved)**
   * Types
     * Move now has PickHero type
     * Move now has Buy type
@@ -45,6 +45,13 @@ Notes about Botters of the Galaxy (not adding code to the repository until after
     * Stay away from enemy tower.
     * Don't attack enemy hero unless enemy units are low in numbers (prevent aggro attack).
     * Buying items based on damage or health (decide based on hero health vs. enemy hero health).
-* Day 2 con't **Beat Wood League 1 (Achieved)**
+* Day 2 con't **Bonus Goal: Beat Wood League 1 (Achieved)**
   * Strategy
     * Added ability to handle multiple heroes.
+* Day 3 **Goal: Move inside top 250 (Currently mid 300s)**
+  * Types
+    * Added new SkillType for each available skill (3 per hero)
+    * Updated Move type to allow for skills.
+  * Strategy
+    * Testing out Deadpool + Ironman combo
+    * Added strategy for each of their skills so far.
