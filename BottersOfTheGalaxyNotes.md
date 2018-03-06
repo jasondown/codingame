@@ -60,4 +60,4 @@ Notes about Botters of the Galaxy (not adding code to the repository until after
   * Yesterday's strategy exploration lead to dropping from ~330 to ~500 overall. Ugh.
   * Strategy
     * Started provoking closest Groot to enemy heroes via Ironman fireball (that are further away from my heroes). Extra damage for me.
-  * Moved to 60th in Bronze and ~430 overall. 
+  * Moved to 60th in Bronze and ~460 overall. 
