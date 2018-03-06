@@ -55,3 +55,6 @@ Notes about Botters of the Galaxy (not adding code to the repository until after
   * Strategy
     * Testing out Deadpool + Ironman combo
     * Added strategy for each of their skills so far.
+* Day 4 **Goal: Move inside top 50 of Bronze**
+  * Silver League was opened up today. I've moved to ~135 in Bronze League after many people moved to Silver.
+  * Yesterday's strategy exploration lead to dropping from ~330 to ~500
