@@ -57,4 +57,7 @@ Notes about Botters of the Galaxy (not adding code to the repository until after
     * Added strategy for each of their skills so far.
 * Day 4 **Goal: Move inside top 50 of Bronze**
   * Silver League was opened up today. I've moved to ~135 in Bronze League after many people moved to Silver.
-  * Yesterday's strategy exploration lead to dropping from ~330 to ~500
+  * Yesterday's strategy exploration lead to dropping from ~330 to ~500 overall. Ugh.
+  * Strategy
+    * Started provoking closest Groot to enemy heroes via Ironman fireball (that are further away from my heroes). Extra damage for me.
+  * Moved to 60th in Bronze and ~430 overall. 
