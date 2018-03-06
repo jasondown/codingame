@@ -61,3 +61,4 @@ Notes about Botters of the Galaxy (not adding code to the repository until after
   * Strategy
     * Started provoking closest Groot to enemy heroes via Ironman fireball (that are further away from my heroes). Extra damage for me.
   * Moved to 60th in Bronze and ~460 overall. 
+  * Currently 2nd in F# overall.
