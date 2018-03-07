@@ -62,3 +62,13 @@ Notes about Botters of the Galaxy (not adding code to the repository until after
     * Started provoking closest Groot to enemy heroes via Ironman fireball (that are further away from my heroes). Extra damage for me.
   * Moved to 60th in Bronze and ~460 overall. 
   * Currently 2nd in F# overall.
+* Day 5 **Goal: Move into Silver before Gold is unlocked (Achieved)**
+  * Moved into top 5 bronze for a while late last night (after my log) and made a tweak before going to bed.
+  * Checked today and the tweaked moved me into Silver (could've been from the patch that was released with a couple buffs, nerfs and bug fixes).
+  * Strategy
+    * Changed low health strategy from hiding by the tower to hiding in the bushes near the tower.
+    * Fixed a bug in the Groot provoking logic and refactored it.
+    * Added MoveAttack logic.
+    * Tweaked some of the skill logic.
+  * Moved as high as ~150 overall, but currently sitting ~220 overall.
+  * Moved back into 1st overall for F#.
