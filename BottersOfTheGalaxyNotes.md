@@ -72,3 +72,7 @@ Notes about Botters of the Galaxy (not adding code to the repository until after
     * Tweaked some of the skill logic.
   * Moved as high as ~150 overall, but currently sitting ~220 overall.
   * Moved back into 1st overall for F#.
+* Day 6 **Goal: Beat Silver League**
+  * Strategy
+    * Fix attack distances, taking hero movement speed into consideration.
+    * Run away from Groot if being attacked (maybe attack him?)
