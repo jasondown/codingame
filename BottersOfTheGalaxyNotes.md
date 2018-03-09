@@ -76,3 +76,8 @@ Notes about Botters of the Galaxy (not adding code to the repository until after
   * Strategy
     * Fix attack distances, taking hero movement speed into consideration.
     * Run away from Groot if being attacked (maybe attack him?)
+* Day 7 **Goal: Beat Silver League**
+  * Strategy
+    * More attack distance fixes.
+    * Attack Groot if he is in attack range.
+    * Getting random time outs right now that loses me matches that I win if I replay them sometimes.
