@@ -81,3 +81,7 @@ Notes about Botters of the Galaxy (not adding code to the repository until after
     * More attack distance fixes.
     * Attack Groot if he is in attack range.
     * Getting random time outs right now that loses me matches that I win if I replay them sometimes.
+* Day 8 **Goal: Beat Silver League**
+  * Moved into Gold after fixing time outs (removing debug messages) about an hour before Legend is unlocked.
+  * Sitting around 235 in Gold (~255 overall)
+  * Didn't really have time to code much this day.
