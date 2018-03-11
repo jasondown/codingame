@@ -85,3 +85,6 @@ Notes about Botters of the Galaxy (not adding code to the repository until after
   * Moved into Gold after fixing time outs (removing debug messages) about an hour before Legend is unlocked.
   * Sitting around 235 in Gold (~255 overall)
   * Didn't really have time to code much this day.
+* Day 9 **Goal: top 25 in Gold**
+  * Found a Hulk bug (two hulks!).
+  * Trying out the dual Hulk strategy.
