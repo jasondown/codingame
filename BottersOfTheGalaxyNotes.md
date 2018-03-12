@@ -88,3 +88,7 @@ Notes about Botters of the Galaxy (not adding code to the repository until after
 * Day 9 **Goal: top 25 in Gold**
   * Found a Hulk bug (two hulks!).
   * Trying out the dual Hulk strategy.
+* Day 10 **Goal: Top 25 in Gold**
+  * Hulk strategy didn't work so well.
+  * Finally doing ditch effort with Ironman and Dr. Strange.*
+  * Sitting near the bottom of gold. Boourns.
