@@ -90,5 +90,6 @@ Notes about Botters of the Galaxy (not adding code to the repository until after
   * Trying out the dual Hulk strategy.
 * Day 10 **Goal: Top 25 in Gold**
   * Hulk strategy didn't work so well.
-  * Finally doing ditch effort with Ironman and Dr. Strange.*
-  * Sitting near the bottom of gold. Boourns.
+  * Finally doing ditch effort with Ironman and Dr. Strange.
+  * -Sitting near the bottom of gold. Boourns.-
+  * Ironman and Dr. Strange minor tweaks moved me into middle of gold.
