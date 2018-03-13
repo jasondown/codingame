@@ -86,10 +86,16 @@ Notes about Botters of the Galaxy (not adding code to the repository until after
   * Sitting around 235 in Gold (~255 overall)
   * Didn't really have time to code much this day.
 * Day 9 **Goal: top 25 in Gold**
-  * Found a Hulk bug (two hulks!).
-  * Trying out the dual Hulk strategy.
+  * There is a Hulk bug (two hulks!).
+  * Trying out the dual Hulk strategy that vaulted many people.
 * Day 10 **Goal: Top 25 in Gold**
-  * Hulk strategy didn't work so well.
+  * Hulk strategy didn't work so well. 
   * Finally doing ditch effort with Ironman and Dr. Strange.
   * ~~Sitting near the bottom of gold. Boourns.~~
   * Ironman and Dr. Strange minor tweaks moved me into middle of gold.
+
+## Final Result:
+
+* 416th Overall (of 1713)
+* 296th in Gold
+* 2nd in F#
