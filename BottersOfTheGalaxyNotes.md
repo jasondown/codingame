@@ -58,29 +58,25 @@ Notes about Botters of the Galaxy (not adding code to the repository until after
 * Day 4 **Goal: Move inside top 50 of Bronze**
   * Silver League was opened up today. I've moved to ~135 in Bronze League after many people moved to Silver.
   * Yesterday's strategy exploration lead to dropping from ~330 to ~500 overall. Ugh.
-  * Strategy
-    * Started provoking closest Groot to enemy heroes via Ironman fireball (that are further away from my heroes). Extra damage for me.
+  * Started provoking closest Groot to enemy heroes via Ironman fireball (that are further away from my heroes). Extra damage for me.
   * Moved to 60th in Bronze and ~460 overall. 
   * Currently 2nd in F# overall.
 * Day 5 **Goal: Move into Silver before Gold is unlocked (Achieved)**
   * Moved into top 5 bronze for a while late last night (after my log) and made a tweak before going to bed.
   * Checked today and the tweaked moved me into Silver (could've been from the patch that was released with a couple buffs, nerfs and bug fixes).
-  * Strategy
-    * Changed low health strategy from hiding by the tower to hiding in the bushes near the tower.
-    * Fixed a bug in the Groot provoking logic and refactored it.
-    * Added MoveAttack logic.
-    * Tweaked some of the skill logic.
+  * Changed low health strategy from hiding by the tower to hiding in the bushes near the tower.
+  * Fixed a bug in the Groot provoking logic and refactored it.
+  * Added MoveAttack logic.
+  * Tweaked some of the skill logic.
   * Moved as high as ~150 overall, but currently sitting ~220 overall.
   * Moved back into 1st overall for F#.
 * Day 6 **Goal: Beat Silver League**
-  * Strategy
-    * Fix attack distances, taking hero movement speed into consideration.
-    * Run away from Groot if being attacked (maybe attack him?)
+  * Fix attack distances, taking hero movement speed into consideration.
+  * Run away from Groot if being attacked (maybe attack him?)
 * Day 7 **Goal: Beat Silver League**
-  * Strategy
-    * More attack distance fixes.
-    * Attack Groot if he is in attack range.
-    * Getting random time outs right now that loses me matches that I win if I replay them sometimes.
+  * More attack distance fixes.
+  * Attack Groot if he is in attack range.
+  * Getting random time outs right now that loses me matches that I win if I replay them sometimes.
 * Day 8 **Goal: Beat Silver League**
   * Moved into Gold after fixing time outs (removing debug messages) about an hour before Legend is unlocked.
   * Sitting around 235 in Gold (~255 overall)
@@ -90,9 +86,11 @@ Notes about Botters of the Galaxy (not adding code to the repository until after
   * Trying out the dual Hulk strategy that vaulted many people.
 * Day 10 **Goal: Top 25 in Gold**
   * Hulk strategy didn't work so well. 
-  * Finally doing ditch effort with Ironman and Dr. Strange.
+  * Finally doing last ditch effort with Ironman and Dr. Strange.
   * ~~Sitting near the bottom of gold. Boourns.~~
-  * Ironman and Dr. Strange minor tweaks moved me into middle of gold.
+  * Ironman and Dr. Strange minor tweaks moved me a little better in gold.
+  * Tried Ironman + Valkyrie strategy for bush sniping + blink (if an appropriate bush is available), otherwise use Ironman and Dr. Strange in a conservative strategy (seemed to work better than aggressive).
+  
 
 ## Final Result:
 
