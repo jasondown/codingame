@@ -215,7 +215,12 @@ while true do
             buyItem hero affordableItems
         | mu, _, _ when mu > 0 ->
             let heroRange = hero.AttackRange + hero.MovementSpeed * 0.3
-            let myFrontUnit = myUnits |> List.maxBy (fun u -> if hero.Team = 0 then u.Point.X else -u.Point.X)
+            let myFrontUnit = 
+                let safeUnits = myUnits |> List.filter (fun u -> isSafeDist hero u.Point)
+                if safeUnits.Length > 0 then
+                    safeUnits |> List.maxBy (fun u -> if hero.Team = 0 then u.Point.X else -u.Point.X)
+                else 
+                    myUnits |> List.maxBy (fun u -> if hero.Team = 0 then u.Point.X else -u.Point.X)              
             let myLowUnit = myUnits |> List.tryFind (fun u -> u <> myFrontUnit && u.Health < u.MaxHealth * 0.4 && u.Health <= hero.AttackDamage && getDist hero.Point u.Point < heroRange)
             match myLowUnit with
             | Some lu -> 
