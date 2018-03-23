@@ -14,9 +14,9 @@ type Entity =
 type Item =
     { Name      : string
       Cost      : int
-      Damage    : int
-      Health    : int
-      MaxHealth : int
+      Damage    : float
+      Health    : float
+      MaxHealth : float
       Mana      : int
       MaxMana   : int
       MoveSpeed : int
@@ -49,16 +49,16 @@ type Unit =
       UnitType      : UnitType
       Point         : Point
       AttackRange   : float
-      Health        : int
-      MaxHealth     : int
+      Health        : float
+      MaxHealth     : float
       Shield        : int
-      AttackDamage  : int
+      AttackDamage  : float
       MovementSpeed : float
       StunDuration  : int
       GoldValue     : int
-      CountDown1    : int
-      CountDown2    : int
-      CountDown3    : int
+      CoolDown1     : int
+      CoolDown2     : int
+      CoolDown3     : int
       Mana          : int
       MaxMana       : int
       ManaRegen     : int
@@ -87,8 +87,9 @@ type Move =
 let myItemsHero1 = new System.Collections.Generic.List<Item>(4)
 let myItemsHero2 = new System.Collections.Generic.List<Item>(4)
 let myHeroTypes = new System.Collections.Generic.List<HeroType>(2)
+let myMessages = new System.Collections.Generic.List<string>(["";""])
 let mutable gold = 0
-
+let mutable roundNum = 1
 //----------Helper Functions
 let readNLines n = List.init n (fun _ -> Console.ReadLine())
 
@@ -129,7 +130,7 @@ let inFrontOf myTeam x1 x2 dist =
     else x1 < x2+dist
 
 let buyItem hero (items : Item list) =
-    let item = items |> List.maxBy (fun i -> i.Damage * 7 + i.Health * 4 + i.Mana * 2)    
+    let item = items |> List.maxBy (fun i -> i.Damage * 7. + i.Health * 4. + float i.Mana * 2.)    
     if hero.HeroType = myHeroTypes.[0]
     then myItemsHero1.Add(item)
     else myItemsHero2.Add(item)
@@ -157,9 +158,9 @@ let items =
         let token = l.Split ' '
         { Name      = token.[0]
           Cost      = int token.[1]
-          Damage    = int token.[2]
-          Health    = int token.[3]
-          MaxHealth = int token.[4]
+          Damage    = float token.[2]
+          Health    = float token.[3]
+          MaxHealth = float token.[4]
           Mana      = int token.[5]
           MaxMana   = int token.[6]
           MoveSpeed = int token.[7]
@@ -184,16 +185,16 @@ while true do
               UnitType      = getUnitType token.[2]
               Point         = { X = float token.[3]; Y = float token.[4] }
               AttackRange   = float token.[5]
-              Health        = int token.[6]
-              MaxHealth     = int token.[7]
+              Health        = float token.[6]
+              MaxHealth     = float token.[7]
               Shield        = int token.[8]
-              AttackDamage  = int token.[9]
+              AttackDamage  = float token.[9]
               MovementSpeed = float token.[10]
               StunDuration  = int token.[11]
               GoldValue     = int token.[12]
-              CountDown1    = int token.[13]
-              CountDown2    = int token.[14]
-              CountDown3    = int token.[15]
+              CoolDown1     = int token.[13]
+              CoolDown2     = int token.[14]
+              CoolDown3     = int token.[15]
               Mana          = int token.[16]
               MaxMana       = int token.[17]
               ManaRegen     = int token.[18]
@@ -202,46 +203,66 @@ while true do
               ItemsOwned    = int token.[21] })        
 
     let getMove (hero : Unit) =
+        roundNum <- roundNum + 1
         let myTower = units |> List.find (fun u -> u.Team = myTeam && u.UnitType = UnitType.Tower)
         let enemyTower = units |> List.find (fun u -> u.Team <> myTeam && u.UnitType = UnitType.Tower)
         let myUnits = units |> List.filter (fun u -> u.Team = myTeam && u.UnitType = UnitType.Unit)
         let enemyUnits = units |> List.filter (fun u -> u.Team <> myTeam && u.UnitType = UnitType.Unit)
         let affordableItems = items |> List.filter (fun i -> i.Cost < gold && not i.IsPotion)
         let isSafeDist = isSafeDistance enemyTower
-        //Console.Error.WriteLine(sprintf "affordable items: %i" affordableItems.Length)
         match myUnits.Length, enemyUnits.Length, affordableItems.Length with
         | _, _, ai when ai > 0 && hero.ItemsOwned < 4 ->
             buyItem hero affordableItems
         | mu, _, _ when mu > 0 ->
             let heroRange = hero.AttackRange + hero.MovementSpeed * 0.3
             let myFrontUnit = myUnits |> List.maxBy (fun u -> if hero.Team = 0 then u.Point.X else -u.Point.X)
-            let potentialMove = { X = backup hero.Team myFrontUnit.Point.X 25.; Y = hero.Point.Y }
-            let lowestEnemy = enemyUnits |> List.tryFind (fun eu -> eu.Health < hero.AttackDamage && getDist potentialMove eu.Point < heroRange)
-            let closestEnemy = enemyUnits |> List.tryFind (fun eu -> getDist potentialMove eu.Point < heroRange)
-            if isSafeDist hero potentialMove then
-                match lowestEnemy, closestEnemy with
-                | Some le, _ -> 
-                    Move.MoveAttack (potentialMove, le.UnitId)
-                | _, Some ce -> 
-                    Move.MoveAttack (potentialMove, ce.UnitId)
-                | _ -> Move.Move potentialMove
-            else 
-                Move.Move myTower.Point
-        | _ -> Move.Move myTower.Point
+            let myLowUnit = myUnits |> List.tryFind (fun u -> u <> myFrontUnit && u.Health < u.MaxHealth * 0.4 && u.Health <= hero.AttackDamage && getDist hero.Point u.Point < heroRange)
+            match myLowUnit with
+            | Some lu -> 
+                myMessages.[roundNum%2] <- sprintf "Denied: %i!" lu.UnitId
+                if getDist hero.Point lu.Point < hero.AttackRange then
+                    Move.Attack lu.UnitId
+                else 
+                    Move.MoveAttack (lu.Point, lu.UnitId)
+            | None ->
+                let potentialMove = { X = backup hero.Team myFrontUnit.Point.X 25.; Y = hero.Point.Y }
+                let lowestEnemy = enemyUnits |> List.tryFind (fun eu -> eu.Health < hero.AttackDamage && getDist potentialMove eu.Point < heroRange)
+                let closestEnemy = enemyUnits |> List.tryFind (fun eu -> getDist potentialMove eu.Point < heroRange)
+                if isSafeDist hero potentialMove then
+                    match lowestEnemy, closestEnemy with
+                    | Some le, _ -> 
+                        myMessages.[roundNum%2] <- sprintf "Attack: %i!" le.UnitId
+                        Move.MoveAttack (potentialMove, le.UnitId)
+                    | _, Some ce -> 
+                        myMessages.[roundNum%2] <- sprintf "Attack: %i!" ce.UnitId
+                        Move.MoveAttack (potentialMove, ce.UnitId)
+                    | _ -> 
+                        myMessages.[roundNum%2] <- "Form a line!"
+                        Move.Move potentialMove
+                else 
+                    myMessages.[roundNum%2] <- "Retreat!"
+                    Move.Move myTower.Point
+        | _ -> 
+            myMessages.[roundNum%2] <- "Retreat!"
+            Move.Move myTower.Point
 
     let moves =
         match roundType with
+        | CommandHeroes _ -> 
+            let myHeroes = units |> List.filter (fun u -> u.Team = myTeam && u.UnitType = Hero)
+            myHeroes 
+            |> List.map getMove
         | SelectHero -> 
             if myHeroTypes.Count = 0 then 
                 myHeroTypes.Add(HeroType.Ironman)
                 [ Move.PickHero HeroType.Ironman ]
             else
                 myHeroTypes.Add(HeroType.Valkyrie)
-                [ Move.PickHero HeroType.Valkyrie ]
-        | CommandHeroes _ -> 
-            let myHeroes = units |> List.filter (fun u -> u.Team = myTeam && u.UnitType = Hero)
-            myHeroes 
-            |> List.map getMove
+                [ Move.PickHero HeroType.Valkyrie ]        
 
-    moves |> List.iter (string >> printfn "%s")
+    match roundType with
+    | CommandHeroes _ ->
+        moves |> List.iteri (fun i m -> printfn "%s;%s" (string m) myMessages.[i])
+    | SelectHero ->
+        moves |> List.iter (string >> printfn "%s")    
     ()
