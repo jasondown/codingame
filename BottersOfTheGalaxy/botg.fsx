@@ -108,8 +108,18 @@ let getDist p1 p2 =
     let dist = (x + y) |> sqrt
     dist
 
+let isSafeDistance (enemyTower : Unit) (hero : Unit) (target : Point) =
+    let distFromTower = getDist target enemyTower.Point
+    let rangeAndSpeed =  enemyTower.AttackRange + hero.MovementSpeed
+    distFromTower > rangeAndSpeed
+
 let backup myTeam (x:float) (x1:float) =
     if myTeam = 0 then x-x1 else x+x1
+
+let inFrontOf myTeam x1 x2 dist =
+    if myTeam = 0 
+    then x1 > x2-dist
+    else x1 < x2+dist
 //----------
 
 let myTeam = Console.ReadLine() |> int
@@ -177,37 +187,40 @@ while true do
               IsVisible     = int token.[20] <> 0
               ItemsOwned    = int token.[21] })        
 
-    let inFrontOf x1 x2 dist =
-        if myTeam = 0 
-        then x1 > x2-dist
-        else x1 < x2+dist
-
     let getMove =
         let myHero = units |> List.tryFind (fun u -> u.Team = myTeam && u.UnitType = UnitType.Hero)
         let enemyHero = units |> List.tryFind (fun u -> u.Team <> myTeam && u.UnitType = UnitType.Hero)
         let myTower = units |> List.find (fun u -> u.Team = myTeam && u.UnitType = UnitType.Tower)
-        match myHero with
-        | None -> Move.Wait
-        | Some hero ->
-            let myUnits = 
-                units 
-                |> List.filter (fun u -> u.Team = myTeam && u.UnitType = Unit)
-                |> List.sortByDescending (fun u -> u.Point.X)
-            if myUnits.Length > 0 && inFrontOf hero.Point.X myUnits.[0].Point.X 25.
-            then Move.Move { X = backup myTeam myUnits.[0].Point.X 25.; Y = hero.Point.Y }
+        let enemyTower = units |> List.find (fun u -> u.Team <> myTeam && u.UnitType = UnitType.Tower)
+        let myUnits = units |> List.filter (fun u -> u.Team = myTeam && u.UnitType = UnitType.Unit)
+        let enemyUnits = units |> List.filter (fun u -> u.Team <> myTeam && u.UnitType = UnitType.Unit)
+        let isSafeDist = isSafeDistance enemyTower
+
+        match myHero, enemyHero, myUnits.Length, enemyUnits.Length with
+        | None, _, _, _ -> Move.Wait
+        | Some hero, Some eHero, mu, eu when mu > 1 ->
+            let heroRange = hero.AttackRange + hero.MovementSpeed * 0.3
+            let myFrontUnit = myUnits |> List.maxBy (fun u -> if hero.Team = 0 then u.Point.X else -u.Point.X)
+            Console.Error.WriteLine(sprintf "Front: %i" myFrontUnit.UnitId)
+            let potentialMove = { X = backup hero.Team myFrontUnit.Point.X 25.; Y = hero.Point.Y }
+            let lowestEnemy = enemyUnits |> List.tryFind (fun eu -> eu.Health < hero.AttackDamage && getDist potentialMove eu.Point < heroRange)
+            let closestEnemy = enemyUnits |> List.tryFind (fun eu -> getDist potentialMove eu.Point < heroRange)
+            if isSafeDist hero potentialMove then
+                match lowestEnemy, closestEnemy with
+                | Some le, _ -> 
+                    Console.Error.WriteLine("Attacking lowest enemy")
+                    Move.MoveAttack (potentialMove, le.UnitId)
+                | _, Some ce -> 
+                    Console.Error.WriteLine("Attacking closest enemy")
+                    Move.MoveAttack (potentialMove, ce.UnitId)
+                | _ -> Move.Move potentialMove
             else 
-                match enemyHero with
-                | None -> Move.Move myTower.Point
-                | Some eHero ->
-                    if getDist eHero.Point hero.Point < hero.AttackRange + hero.MovementSpeed then
-                        // let potentialPoint = { eHero.Point with X = backup hero.Team eHero.Point.X hero.AttackRange }
-                        // Move.MoveAttack (potentialPoint, eHero.UnitId)
-                        Move.AttackNearest UnitType.Hero
-                    else 
-                        Move.Move myTower.Point
+                Move.Move myTower.Point
+        | _ -> Move.Move myTower.Point
+
     let move =
         match roundType with
-        | SelectHero -> Move.PickHero HeroType.Hulk
+        | SelectHero -> Move.PickHero HeroType.DoctorStrange
         | CommandHeroes _ -> getMove
 
     printfn "%s" (move |> string)
