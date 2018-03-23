@@ -68,19 +68,23 @@ type Unit =
 
 type Move = 
     | Move of Point 
+    | MoveAttack of Point * int
     | Attack of int
     | AttackNearest of UnitType
-    | MoveAttack of Point * int
+    | Buy of Item
     | Wait 
     | PickHero of HeroType
     override x.ToString() =
         match x with
         | Move p -> sprintf "MOVE %f %f" p.X p.Y
+        | MoveAttack (p, id) -> sprintf "MOVE_ATTACK %f %f %i" p.X p.Y id
         | Attack id -> sprintf "ATTACK %i" id
         | AttackNearest ut -> sprintf "ATTACK_NEAREST %s" (ut.ToString())
-        | MoveAttack (p, id) -> sprintf "MOVE_ATTACK %f %f %i" p.X p.Y id
+        | Buy i -> sprintf "BUY %s" i.Name
         | Wait -> "WAIT"
         | PickHero h -> h |> string
+
+let mutable gold = 0
 
 //----------Helper Functions
 let readNLines n = List.init n (fun _ -> Console.ReadLine())
@@ -120,10 +124,14 @@ let inFrontOf myTeam x1 x2 dist =
     if myTeam = 0 
     then x1 > x2-dist
     else x1 < x2+dist
+
+let buyItem (items : Item list) =
+    let item = items |> List.maxBy (fun i -> i.Damage * 7 + i.Health * 4 + i.Mana * 2)
+    gold <- gold - item.Cost
+    Move.Buy item
 //----------
 
 let myTeam = Console.ReadLine() |> int
-
 let entities =
     Console.ReadLine() |> int |> readNLines
     |> List.map (fun l -> 
@@ -154,7 +162,7 @@ let items =
 
 (* game loop *)
 while true do
-    let gold = Console.ReadLine() |> int
+    gold <- Console.ReadLine() |> int
     let enemyGold = Console.ReadLine() |> int
     let roundType = 
         match Console.ReadLine() |> int with
@@ -194,24 +202,25 @@ while true do
         let enemyTower = units |> List.find (fun u -> u.Team <> myTeam && u.UnitType = UnitType.Tower)
         let myUnits = units |> List.filter (fun u -> u.Team = myTeam && u.UnitType = UnitType.Unit)
         let enemyUnits = units |> List.filter (fun u -> u.Team <> myTeam && u.UnitType = UnitType.Unit)
+        let affordableItems = items |> List.filter (fun i -> i.Cost < gold && not i.IsPotion)
         let isSafeDist = isSafeDistance enemyTower
-
-        match myHero, enemyHero, myUnits.Length, enemyUnits.Length with
-        | None, _, _, _ -> Move.Wait
-        | Some hero, Some eHero, mu, eu when mu > 1 ->
+        Console.Error.WriteLine(sprintf "gold: %i" gold)
+        Console.Error.WriteLine(sprintf "affordable items: %i" affordableItems.Length)
+        match myHero, enemyHero, myUnits.Length, enemyUnits.Length, affordableItems.Length with
+        | None, _, _, _, _ -> Move.Wait
+        | Some hero, _, _, _, ai when ai > 0 && hero.ItemsOwned < 4 ->
+            buyItem affordableItems
+        | Some hero, _, mu, _, _ when mu > 1 ->
             let heroRange = hero.AttackRange + hero.MovementSpeed * 0.3
             let myFrontUnit = myUnits |> List.maxBy (fun u -> if hero.Team = 0 then u.Point.X else -u.Point.X)
-            Console.Error.WriteLine(sprintf "Front: %i" myFrontUnit.UnitId)
             let potentialMove = { X = backup hero.Team myFrontUnit.Point.X 25.; Y = hero.Point.Y }
             let lowestEnemy = enemyUnits |> List.tryFind (fun eu -> eu.Health < hero.AttackDamage && getDist potentialMove eu.Point < heroRange)
             let closestEnemy = enemyUnits |> List.tryFind (fun eu -> getDist potentialMove eu.Point < heroRange)
             if isSafeDist hero potentialMove then
                 match lowestEnemy, closestEnemy with
                 | Some le, _ -> 
-                    Console.Error.WriteLine("Attacking lowest enemy")
                     Move.MoveAttack (potentialMove, le.UnitId)
                 | _, Some ce -> 
-                    Console.Error.WriteLine("Attacking closest enemy")
                     Move.MoveAttack (potentialMove, ce.UnitId)
                 | _ -> Move.Move potentialMove
             else 
@@ -220,7 +229,7 @@ while true do
 
     let move =
         match roundType with
-        | SelectHero -> Move.PickHero HeroType.DoctorStrange
+        | SelectHero -> Move.PickHero HeroType.Valkyrie
         | CommandHeroes _ -> getMove
 
     printfn "%s" (move |> string)
