@@ -84,6 +84,9 @@ type Move =
         | Wait -> "WAIT"
         | PickHero h -> h |> string
 
+let myItemsHero1 = new System.Collections.Generic.List<Item>(4)
+let myItemsHero2 = new System.Collections.Generic.List<Item>(4)
+let myHeroTypes = new System.Collections.Generic.List<HeroType>(2)
 let mutable gold = 0
 
 //----------Helper Functions
@@ -125,8 +128,11 @@ let inFrontOf myTeam x1 x2 dist =
     then x1 > x2-dist
     else x1 < x2+dist
 
-let buyItem (items : Item list) =
-    let item = items |> List.maxBy (fun i -> i.Damage * 7 + i.Health * 4 + i.Mana * 2)
+let buyItem hero (items : Item list) =
+    let item = items |> List.maxBy (fun i -> i.Damage * 7 + i.Health * 4 + i.Mana * 2)    
+    if hero.HeroType = myHeroTypes.[0]
+    then myItemsHero1.Add(item)
+    else myItemsHero2.Add(item)
     gold <- gold - item.Cost
     Move.Buy item
 //----------
@@ -195,22 +201,18 @@ while true do
               IsVisible     = int token.[20] <> 0
               ItemsOwned    = int token.[21] })        
 
-    let getMove =
-        let myHero = units |> List.tryFind (fun u -> u.Team = myTeam && u.UnitType = UnitType.Hero)
-        let enemyHero = units |> List.tryFind (fun u -> u.Team <> myTeam && u.UnitType = UnitType.Hero)
+    let getMove (hero : Unit) =
         let myTower = units |> List.find (fun u -> u.Team = myTeam && u.UnitType = UnitType.Tower)
         let enemyTower = units |> List.find (fun u -> u.Team <> myTeam && u.UnitType = UnitType.Tower)
         let myUnits = units |> List.filter (fun u -> u.Team = myTeam && u.UnitType = UnitType.Unit)
         let enemyUnits = units |> List.filter (fun u -> u.Team <> myTeam && u.UnitType = UnitType.Unit)
         let affordableItems = items |> List.filter (fun i -> i.Cost < gold && not i.IsPotion)
         let isSafeDist = isSafeDistance enemyTower
-        Console.Error.WriteLine(sprintf "gold: %i" gold)
-        Console.Error.WriteLine(sprintf "affordable items: %i" affordableItems.Length)
-        match myHero, enemyHero, myUnits.Length, enemyUnits.Length, affordableItems.Length with
-        | None, _, _, _, _ -> Move.Wait
-        | Some hero, _, _, _, ai when ai > 0 && hero.ItemsOwned < 4 ->
-            buyItem affordableItems
-        | Some hero, _, mu, _, _ when mu > 1 ->
+        //Console.Error.WriteLine(sprintf "affordable items: %i" affordableItems.Length)
+        match myUnits.Length, enemyUnits.Length, affordableItems.Length with
+        | _, _, ai when ai > 0 && hero.ItemsOwned < 4 ->
+            buyItem hero affordableItems
+        | mu, _, _ when mu > 0 ->
             let heroRange = hero.AttackRange + hero.MovementSpeed * 0.3
             let myFrontUnit = myUnits |> List.maxBy (fun u -> if hero.Team = 0 then u.Point.X else -u.Point.X)
             let potentialMove = { X = backup hero.Team myFrontUnit.Point.X 25.; Y = hero.Point.Y }
@@ -227,10 +229,19 @@ while true do
                 Move.Move myTower.Point
         | _ -> Move.Move myTower.Point
 
-    let move =
+    let moves =
         match roundType with
-        | SelectHero -> Move.PickHero HeroType.Valkyrie
-        | CommandHeroes _ -> getMove
+        | SelectHero -> 
+            if myHeroTypes.Count = 0 then 
+                myHeroTypes.Add(HeroType.Ironman)
+                [ Move.PickHero HeroType.Ironman ]
+            else
+                myHeroTypes.Add(HeroType.Valkyrie)
+                [ Move.PickHero HeroType.Valkyrie ]
+        | CommandHeroes _ -> 
+            let myHeroes = units |> List.filter (fun u -> u.Team = myTeam && u.UnitType = Hero)
+            myHeroes 
+            |> List.map getMove
 
-    printfn "%s" (move |> string)
+    moves |> List.iter (string >> printfn "%s")
     ()
