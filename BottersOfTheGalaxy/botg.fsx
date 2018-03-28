@@ -231,12 +231,15 @@ while true do
         match hero.Health, healthPotions.Length, hero.Mana, manaPotions.Length, myUnits.Length, enemyUnits.Length, affordableItems.Length with
 
         | h, hp, _, _, _, _, _ when h < hero.MaxHealth * 0.3 && hp > 0 ->
+            myMessages.[roundNum%2] <- sprintf "Health Potion"
             healthPotions |> buyPotion PotionType.Health
 
         | _, _, m, mp, _, _, _ when m < hero.MaxMana / 4 && mp > 0 ->
+            myMessages.[roundNum%2] <- sprintf "Mana Potion"
             manaPotions |> buyPotion PotionType.Mana
 
         | _, _, _, _, _, _, ai when ai > 0 && hero.ItemsOwned < 4 ->
+            myMessages.[roundNum%2] <- sprintf "New Shiny!"
             buyItem hero affordableItems
 
         | _, _, _, _, mu, _, _ when mu > 0 ->
