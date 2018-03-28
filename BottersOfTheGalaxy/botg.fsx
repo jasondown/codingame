@@ -223,26 +223,9 @@ while true do
     let enemyUnits = units |> List.filter (fun u -> u.Team <> myTeam && u.UnitType = UnitType.Unit)
     
     let getMove (hero : Unit) =
-        roundNum <- roundNum + 1    
-        let affordableItems = items |> List.filter (fun i -> i.Cost < gold && not i.IsPotion)
-        let healthPotions = items |> List.filter (fun i -> i.Cost <= gold && i.IsPotion && i.Health > 0.)
-        let manaPotions = items |> List.filter(fun i -> i.Cost <= gold && i.IsPotion && i.Mana > 0)
         let isSafeDist = isSafeDistance enemyTower
-        match hero.Health, healthPotions.Length, hero.Mana, manaPotions.Length, myUnits.Length, enemyUnits.Length, affordableItems.Length with
-
-        | h, hp, _, _, _, _, _ when h < hero.MaxHealth * 0.3 && hp > 0 ->
-            myMessages.[roundNum%2] <- sprintf "Health Potion"
-            healthPotions |> buyPotion PotionType.Health
-
-        | _, _, m, mp, _, _, _ when m < hero.MaxMana / 4 && mp > 0 ->
-            myMessages.[roundNum%2] <- sprintf "Mana Potion"
-            manaPotions |> buyPotion PotionType.Mana
-
-        | _, _, _, _, _, _, ai when ai > 0 && hero.ItemsOwned < 4 ->
-            myMessages.[roundNum%2] <- sprintf "New Shiny!"
-            buyItem hero affordableItems
-
-        | _, _, _, _, mu, _, _ when mu > 0 ->
+        match myUnits.Length, enemyUnits.Length with
+        | mu, _ when mu > 0 ->
             let heroRange = hero.AttackRange + hero.MovementSpeed * 0.3
             let myFrontUnit = 
                 let safeUnits = myUnits |> List.filter (fun u -> isSafeDist hero u.Point)
@@ -285,7 +268,27 @@ while true do
         | CommandHeroes _ -> 
             let myHeroes = units |> List.filter (fun u -> u.Team = myTeam && u.UnitType = Hero)
             myHeroes 
-            |> List.map getMove
+            |> List.map (fun hero ->
+                roundNum <- roundNum + 1    
+                let affordableItems = items |> List.filter (fun i -> i.Cost < gold && not i.IsPotion)
+                let healthPotions = items |> List.filter (fun i -> i.Cost <= gold && i.IsPotion && i.Health > 0.)
+                let manaPotions = items |> List.filter(fun i -> i.Cost <= gold && i.IsPotion && i.Mana > 0)
+                let isSafeDist = isSafeDistance enemyTower
+                match hero.Health, healthPotions.Length, hero.Mana, manaPotions.Length, affordableItems.Length with
+                | h, hp, _, _, _ when h < hero.MaxHealth * 0.3 && hp > 0 ->
+                    myMessages.[roundNum%2] <- sprintf "Health Potion"
+                    healthPotions |> buyPotion PotionType.Health
+
+                | _, _, m, mp, _ when m < hero.MaxMana / 4 && mp > 0 ->
+                    myMessages.[roundNum%2] <- sprintf "Mana Potion"
+                    manaPotions |> buyPotion PotionType.Mana
+
+                | _, _, _, _, ai when ai > 0 && hero.ItemsOwned < 4 ->
+                    myMessages.[roundNum%2] <- sprintf "New Shiny!"
+                    affordableItems |> buyItem hero
+
+                | _, _, _, _, _ ->
+                    getMove hero)
         | SelectHero -> 
             if myHeroTypes.Count = 0 then 
                 myHeroTypes.Add(HeroType.Ironman)
