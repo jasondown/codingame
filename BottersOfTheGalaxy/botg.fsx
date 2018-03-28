@@ -70,6 +70,23 @@ type Unit =
       IsVisible     : bool
       ItemsOwned    : int }
 
+type SkillType =
+    | DeadPoolCounter
+    | DeadPoolWire of Point
+    | DeadPoolStealth of Point
+    | HulkCharge of Unit
+    | HulkExplosiveShield
+    | HulkBash of Unit
+    | ValkyrieSpearFlip of Unit
+    | ValkyrieJump of Point
+    | ValkyriePowerup
+    | IronmanBlink of Point
+    | IronmanFireball of Point
+    | IronmanBurning of Point
+    | DrStrangeAoeHeal of Point
+    | DrStrangeShield of Unit
+    | DrStrangePull of Unit
+
 type Move = 
     | Move of Point 
     | MoveAttack of Point * int
@@ -78,13 +95,29 @@ type Move =
     | Buy of Item
     | Wait 
     | PickHero of HeroType
+    | Skill of SkillType
     override x.ToString() =
         match x with
-        | Move p -> sprintf "MOVE %f %f" p.X p.Y
-        | MoveAttack (p, id) -> sprintf "MOVE_ATTACK %f %f %i" p.X p.Y id
+        | Move p -> sprintf "MOVE %.0f %.0f" p.X p.Y
+        | MoveAttack (p, id) -> sprintf "MOVE_ATTACK %.0f %.0f %i" p.X p.Y id
         | Attack id -> sprintf "ATTACK %i" id
         | AttackNearest ut -> sprintf "ATTACK_NEAREST %s" (ut.ToString())
         | Buy i -> sprintf "BUY %s" i.Name
+        | Skill (IronmanBlink p) -> sprintf "BLINK %.0f %.0f" p.X p.Y
+        | Skill (IronmanFireball p) -> sprintf "FIREBALL %.0f %.0f" p.X p.Y
+        | Skill (IronmanBurning p) -> sprintf "BURNING %.0f %.0f" p.X p.Y
+        | Skill (ValkyrieSpearFlip u) -> sprintf "SPEARFLIP %i" u.UnitId
+        | Skill (ValkyrieJump p) -> sprintf "JUMP %.0f %.0f" p.X p.Y
+        | Skill ValkyriePowerup -> sprintf "POWERUP"
+        | Skill DeadPoolCounter -> sprintf "COUNTER"
+        | Skill (DeadPoolWire p) -> sprintf "WIRE %.0f %.0f" p.X p.Y
+        | Skill (DeadPoolStealth p) -> sprintf "STEALTH %.0f %.0f" p.X p.Y
+        | Skill (HulkCharge u) -> sprintf "CHARGE %i" u.UnitId
+        | Skill HulkExplosiveShield -> sprintf "EXPLOSIVESHIELD"
+        | Skill (HulkBash u) -> sprintf "BASH %i" u.UnitId
+        | Skill (DrStrangeAoeHeal p) -> sprintf "AOEHEAL %.0f %.0f" p.X p.Y
+        | Skill (DrStrangeShield u) -> sprintf "SHIELD %i" u.UnitId
+        | Skill (DrStrangePull u) -> sprintf "PULL %i" u.UnitId
         | Wait -> "WAIT"
         | PickHero h -> h |> string
 
@@ -221,52 +254,84 @@ while true do
     let enemyTower = units |> List.find (fun u -> u.Team <> myTeam && u.UnitType = UnitType.Tower)
     let myUnits = units |> List.filter (fun u -> u.Team = myTeam && u.UnitType = UnitType.Unit)
     let enemyUnits = units |> List.filter (fun u -> u.Team <> myTeam && u.UnitType = UnitType.Unit)
-    
+    let myHeroes = units |> List.filter (fun u -> u.Team = myTeam && u.UnitType = Hero)
+    let enemyHeroes = units |> List.filter (fun u -> u.Team <> myTeam && u.UnitType = UnitType.Hero)
+
+    let retreat () =
+        myMessages.[roundNum%2] <- "Retreat!"
+        Move.Move myTower.Point 
+
+    let getNonSkillMove (hero : Unit) =
+        let isSafeDist = isSafeDistance enemyTower
+        let heroRange = hero.AttackRange + hero.MovementSpeed * 0.3
+        let myFrontUnit = 
+            let safeUnits = myUnits |> List.filter (fun u -> isSafeDist hero u.Point)
+            if safeUnits.Length > 0 then
+                safeUnits |> List.maxBy (fun u -> if hero.Team = 0 then u.Point.X else -u.Point.X)
+            else 
+                myUnits |> List.maxBy (fun u -> if hero.Team = 0 then u.Point.X else -u.Point.X)              
+        let myLowUnit = myUnits |> List.tryFind (fun u -> u <> myFrontUnit && u.Health < u.MaxHealth * 0.4 && u.Health <= hero.AttackDamage && getDist hero.Point u.Point < heroRange)
+        match myLowUnit with
+        | Some lu -> 
+            myMessages.[roundNum%2] <- sprintf "Deny: %i" lu.UnitId
+            if getDist hero.Point lu.Point < hero.AttackRange then
+                Move.Attack lu.UnitId
+            else 
+                Move.MoveAttack (lu.Point, lu.UnitId)
+        | None ->
+            let potentialMove = { X = backup hero.Team myFrontUnit.Point.X 25.; Y = hero.Point.Y }
+            let lowestEnemy = enemyUnits |> List.tryFind (fun eu -> eu.Health < hero.AttackDamage && getDist potentialMove eu.Point < heroRange)
+            let closestEnemy = enemyUnits |> List.tryFind (fun eu -> getDist potentialMove eu.Point < heroRange)
+            if isSafeDist hero potentialMove then
+                match lowestEnemy, closestEnemy with
+                | Some le, _ -> 
+                    myMessages.[roundNum%2] <- sprintf "Attack: %i" le.UnitId
+                    Move.MoveAttack (potentialMove, le.UnitId)
+                | _, Some ce -> 
+                    myMessages.[roundNum%2] <- sprintf "Attack: %i" ce.UnitId
+                    Move.MoveAttack (potentialMove, ce.UnitId)
+                | _ -> 
+                    myMessages.[roundNum%2] <- "Form a line"
+                    Move.Move potentialMove
+            else 
+                retreat ()
+
     let getMove (hero : Unit) =
         let isSafeDist = isSafeDistance enemyTower
-        match myUnits.Length, enemyUnits.Length with
-        | mu, _ when mu > 0 ->
-            let heroRange = hero.AttackRange + hero.MovementSpeed * 0.3
-            let myFrontUnit = 
-                let safeUnits = myUnits |> List.filter (fun u -> isSafeDist hero u.Point)
-                if safeUnits.Length > 0 then
-                    safeUnits |> List.maxBy (fun u -> if hero.Team = 0 then u.Point.X else -u.Point.X)
+        match enemyUnits.Length, enemyHeroes.Length, hero.HeroType with
+        | eu, _, ht when eu > 0 && ht = HeroType.Ironman ->
+            let burnRange = enemyUnits |> List.filter (fun u -> getDist hero.Point u.Point <= 250.)
+            let fireballRange = enemyUnits |> List.filter (fun u -> getDist hero.Point u.Point <= 900.)
+            match hero.Mana, hero.CoolDown1, hero.CoolDown2, fireballRange.Length, hero.CoolDown3, burnRange.Length with
+            | m, _, _, _, cd3, br when m >= 50 && cd3 = 0 && br >= 2 ->
+                let target = burnRange.Head.Point
+                myMessages.[roundNum%2] <- sprintf "Burn: %.0f %.0f" target.X target.Y
+                Move.Skill (SkillType.IronmanBurning target)
+            | m, _, cd2, fr, _, _ when m >= 60 && cd2 = 0 && fr >= 2 ->
+                let target = fireballRange.Head.Point
+                myMessages.[roundNum%2] <- sprintf "FB: %.0f %.0f" target.X target.Y
+                Move.Skill (SkillType.IronmanFireball fireballRange.Head.Point)
+            // | m, cd1, _, _, _, _ when m >= 16 && m <= 50 && cd1 = 0 ->
+            //     let target = { hero.Point with X = backup myTeam hero.Point.X 200. }
+            //     myMessages.[roundNum%2] <- sprintf "Blink: %.0f %.0f" target.X target.Y
+            //     Move.Skill (SkillType.IronmanBlink target)
+            | _ ->
+                if myUnits.Length > 0 then
+                    getNonSkillMove hero
                 else 
-                    myUnits |> List.maxBy (fun u -> if hero.Team = 0 then u.Point.X else -u.Point.X)              
-            let myLowUnit = myUnits |> List.tryFind (fun u -> u <> myFrontUnit && u.Health < u.MaxHealth * 0.4 && u.Health <= hero.AttackDamage && getDist hero.Point u.Point < heroRange)
-            match myLowUnit with
-            | Some lu -> 
-                myMessages.[roundNum%2] <- sprintf "Denied: %i!" lu.UnitId
-                if getDist hero.Point lu.Point < hero.AttackRange then
-                    Move.Attack lu.UnitId
-                else 
-                    Move.MoveAttack (lu.Point, lu.UnitId)
-            | None ->
-                let potentialMove = { X = backup hero.Team myFrontUnit.Point.X 25.; Y = hero.Point.Y }
-                let lowestEnemy = enemyUnits |> List.tryFind (fun eu -> eu.Health < hero.AttackDamage && getDist potentialMove eu.Point < heroRange)
-                let closestEnemy = enemyUnits |> List.tryFind (fun eu -> getDist potentialMove eu.Point < heroRange)
-                if isSafeDist hero potentialMove then
-                    match lowestEnemy, closestEnemy with
-                    | Some le, _ -> 
-                        myMessages.[roundNum%2] <- sprintf "Attack: %i!" le.UnitId
-                        Move.MoveAttack (potentialMove, le.UnitId)
-                    | _, Some ce -> 
-                        myMessages.[roundNum%2] <- sprintf "Attack: %i!" ce.UnitId
-                        Move.MoveAttack (potentialMove, ce.UnitId)
-                    | _ -> 
-                        myMessages.[roundNum%2] <- "Form a line!"
-                        Move.Move potentialMove
-                else 
-                    myMessages.[roundNum%2] <- "Retreat!"
-                    Move.Move myTower.Point
+                   retreat ()
+
+        | _, _, ht when ht = HeroType.Valkyrie ->
+            if myUnits.Length > 0 then
+                getNonSkillMove hero
+            else
+               retreat () 
         | _ -> 
-            myMessages.[roundNum%2] <- "Retreat!"
-            Move.Move myTower.Point
+            retreat ()
 
     let moves =
         match roundType with
         | CommandHeroes _ -> 
-            let myHeroes = units |> List.filter (fun u -> u.Team = myTeam && u.UnitType = Hero)
             myHeroes 
             |> List.map (fun hero ->
                 roundNum <- roundNum + 1    
@@ -283,12 +348,13 @@ while true do
                     myMessages.[roundNum%2] <- sprintf "Mana Potion"
                     manaPotions |> buyPotion PotionType.Mana
 
-                | _, _, _, _, ai when ai > 0 && hero.ItemsOwned < 4 ->
-                    myMessages.[roundNum%2] <- sprintf "New Shiny!"
+                | _, _, _, _, ai when ai > 0 && hero.ItemsOwned < 3 ->
+                    myMessages.[roundNum%2] <- sprintf "New Shiny"
                     affordableItems |> buyItem hero
 
-                | _, _, _, _, _ ->
+                | _ ->
                     getMove hero)
+
         | SelectHero -> 
             if myHeroTypes.Count = 0 then 
                 myHeroTypes.Add(HeroType.Ironman)
@@ -299,7 +365,9 @@ while true do
 
     match roundType with
     | CommandHeroes _ ->
-        moves |> List.iteri (fun i m -> printfn "%s;%s" (string m) myMessages.[i])
+        moves 
+        |> List.iteri (fun i m -> printfn "%s;%s" (string m) myMessages.[i])
     | SelectHero ->
-        moves |> List.iter (string >> printfn "%s")    
+        moves 
+        |> List.iter (string >> printfn "%s")    
     ()
