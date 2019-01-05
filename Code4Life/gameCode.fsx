@@ -1,4 +1,5 @@
 open System
+open System.Reflection
 
 type HealthPoints = int
 type Id = int
@@ -99,6 +100,18 @@ type UndiagnosedSampleData =
 type SampleData =
     | Diagnosed of DiagnosedSampleData
     | Undiagnosed of UndiagnosedSampleData
+    member x.HasBeenDiagnosed =
+        match x with
+        | SampleData.Diagnosed d -> Some d
+        | _ -> None
+    member x.NeedsToBeDiagnosed =
+        match x with
+        | SampleData.Undiagnosed u -> Some u
+        | _ -> None
+    member x.CarriedBy =
+        match x with
+        | SampleData.Diagnosed d -> d.CarriedBy
+        | SampleData.Undiagnosed u -> u.CarriedBy
     static member Create (token : Token) =
         if token.[4] |> int = -1 then
             SampleData.Undiagnosed <| UndiagnosedSampleData.Create token
@@ -109,13 +122,15 @@ type GameState =
     { Robots : Robot list
       Samples : SampleData list }
 
-type Collect = UndiagnosedSampleData -> string
+type CollectNewSample = Rank -> string
+type CollectCloudSample = DiagnosedSampleData -> string
 type Analyze = UndiagnosedSampleData -> string
 type Gather = MoleculeType -> string
 type Produce = DiagnosedSampleData -> string
 type Goto = Module -> string
 
-let collect : Collect = fun s -> sprintf "CONNECT %i" <| s.Id
+let collectNewSample : CollectNewSample = fun r -> sprintf "CONNECT %i" <| r
+let collectCloudSample : CollectCloudSample = fun s -> sprintf "CONNECT %i" <| s.Id
 let anaylze : Analyze = fun s -> sprintf "CONNECT %i" <| s.Id
 let gather : Gather = fun m -> sprintf "CONNECT %s" <| m.ToString()
 let produce : Produce = fun s -> sprintf "CONNECT %i" s.Id
@@ -141,31 +156,44 @@ let getRequiredMolecule (robot : Robot) (sample : DiagnosedSampleData) =
     ms.Key
 
 let getMove (gs : GameState) =
-    "WAIT"
-    // let me = gs.Robots |> List.find (fun r -> r.Player = Player.Me)
-    // let mySamples = gs.Samples |> List.filter (fun s -> s.CarriedBy = Player.Me)
-    // let samplesReady = mySamples |> List.filter (canMakeSample me)
-    // let cloudSamples = 
-    //     gs.Samples 
-    //     |> List.filter (fun s -> s.CarriedBy = Player.Cloud)
-    //     |> List.sortByDescending (fun s -> s.HealthPoints)
+    let me = gs.Robots |> List.find (fun r -> r.Player = Player.Me)
+    let mySamples = gs.Samples |> List.filter (fun s -> s.CarriedBy = Player.Me)
+    let myUndiagnosedSamples = mySamples |> List.choose (fun s -> s.NeedsToBeDiagnosed)
+    let myDiagnosedSamples = mySamples |> List.choose (fun s -> s.HasBeenDiagnosed)
+    let samplesReady = myDiagnosedSamples |> List.filter (canMakeSample me)
+
+    let cloudSamples = 
+        gs.Samples
+        |> List.filter (fun s -> s.CarriedBy = Player.Cloud)
+        |> List.choose (fun s -> s.HasBeenDiagnosed)
+        |> List.sortByDescending (fun s -> s.HealthPoints)
     
-    // match mySamples.Length, samplesReady.Length, cloudSamples.Length, me.Location with
-    // | _, sr, _, Module.Laboratory when sr > 0 -> 
-    //     produce samplesReady.Head
-    // | _, sr, _, _  when sr > 0 -> 
-    //     goto Module.Laboratory
+    match myUndiagnosedSamples.Length, myDiagnosedSamples.Length, samplesReady.Length, cloudSamples.Length, me.Location with
+    | _, _, sr, _, Module.Laboratory when sr > 0 ->
+        produce samplesReady.Head
+    | _, _, sr, _, _ when sr > 0 -> 
+        goto Module.Laboratory
 
-    // | ms, _, cs, Module.Diagnosis when ms = 0 && cs > 0 -> 
-    //     collect cloudSamples.Head
-    // | ms, _, cs, _ when ms = 0 && cs > 0 -> 
-    //     goto Module.Diagnosis
+    | us, ds, _, cs, Module.Diagnosis when us = 0 && ds = 0 && cs > 0 -> 
+        collectCloudSample cloudSamples.Head
+    | us, ds, _, cs, _ when us = 0 && ds = 0 && cs > 0 -> 
+        goto Module.Diagnosis
 
-    // | _, _, _, Module.Molecules -> 
-    //     gather (getRequiredMolecule me mySamples.Head)
-    // | _, _, _, _ -> 
-    //     goto Module.Molecules
+    | us, ds, _, _, Module.Diagnosis when us > 0 && ds = 0 -> 
+        anaylze myUndiagnosedSamples.Head
+    | us, ds, _, _, _ when us > 0 && ds = 0 -> 
+        goto Module.Diagnosis
 
+    | us, ds, _, _, Module.Samples when us = 0 && ds = 0 -> 
+        collectNewSample 3 // just grab highest rank
+    | us, ds, _, _, _ when us = 0 && ds = 0 -> 
+        goto Module.Samples
+
+    | _, _, _, _, Module.Molecules -> 
+        gather (getRequiredMolecule me myDiagnosedSamples.Head)
+    | _, _, _, _, _ -> 
+        goto Module.Molecules
+    
 // ignore project count stuff for wood 2
 let projectCount = readInt()
 for i in 0 .. projectCount - 1 do
@@ -186,7 +214,7 @@ while true do
         |> Array.map (tokenize >> SampleData.Create)
         |> Array.toList
 
-    eprintf "%A" samples
+    //eprintf "%A" samples
 
     let gameState = 
         { Robots = [me; enemy]
