@@ -2,6 +2,7 @@ open System
 
 type HealthPoints = int
 type Id = int
+type Rank = int
 type Token = string array
 
 type Player = 
@@ -36,12 +37,14 @@ type MoleculeStorage =
 
 type Module =
     | StartPos
+    | Samples
     | Diagnosis
     | Molecules
     | Laboratory
     static member Create moduleName =
         match moduleName with
         | "START_POS"  -> Module.StartPos
+        | "SAMPLES"    -> Module.Samples
         | "DIAGNOSIS"  -> Module.Diagnosis
         | "MOLECULES"  -> Module.Molecules
         | "LABORATORY" -> Module.Laboratory
@@ -49,6 +52,7 @@ type Module =
     override x.ToString () =
         match x with
         | StartPos   -> "START_POS"
+        | Samples    -> "SAMPLES"
         | Diagnosis  -> "DIAGNOSIS"
         | Molecules  -> "MOLECULES"
         | Laboratory -> "LABORATORY"
@@ -67,29 +71,52 @@ type Robot =
           // expertise : ignore (token.[8 .. 12]) for wood 2 
         }
 
-type SampleData =
+type DiagnosedSampleData =
     { Id : Id
       CarriedBy : Player
+      Rank : Rank
       HealthPoints : HealthPoints
       Molecules : MoleculeStorage }
     static member Create (token : Token) =
         { Id = (int <| token.[0])
           CarriedBy = Player.Create (int <| token.[1])
-          // rank : ignore (token.[2]) for wood 2
+          Rank = (int <| token.[2])
           // gain : ignore (token.[3]) for wood 2
           HealthPoints = (int <| token.[4])
-          Molecules = MoleculeStorage.Create token.[5 .. 9] }
+          Molecules = MoleculeStorage.Create token.[5 .. 9] 
+        }
+
+type UndiagnosedSampleData =
+    { Id : Id
+      CarriedBy : Player 
+      Rank : Rank }
+    static member Create (token : Token) =
+        { Id = (int <| token.[0])
+          CarriedBy = Player.Create (int <| token.[1]) 
+          Rank = (int <| token.[2]) 
+        }
+
+type SampleData =
+    | Diagnosed of DiagnosedSampleData
+    | Undiagnosed of UndiagnosedSampleData
+    static member Create (token : Token) =
+        if token.[4] |> int = -1 then
+            SampleData.Undiagnosed <| UndiagnosedSampleData.Create token
+        else
+            SampleData.Diagnosed <| DiagnosedSampleData.Create token
 
 type GameState =
     { Robots : Robot list
       Samples : SampleData list }
 
-type Collect = SampleData -> string
+type Collect = UndiagnosedSampleData -> string
+type Analyze = UndiagnosedSampleData -> string
 type Gather = MoleculeType -> string
-type Produce = SampleData -> string
+type Produce = DiagnosedSampleData -> string
 type Goto = Module -> string
 
 let collect : Collect = fun s -> sprintf "CONNECT %i" <| s.Id
+let anaylze : Analyze = fun s -> sprintf "CONNECT %i" <| s.Id
 let gather : Gather = fun m -> sprintf "CONNECT %s" <| m.ToString()
 let produce : Produce = fun s -> sprintf "CONNECT %i" s.Id
 let goto : Goto = fun m -> sprintf "GOTO %s" <| m.ToString()
@@ -102,11 +129,11 @@ let tokenizeInput = readInput >> tokenize
 let readNLines n = Array.init n (fun _ -> readInput())
 
 // Turn-based functions
-let canMakeSample (robot : Robot) (sample : SampleData) =
+let canMakeSample (robot : Robot) (sample : DiagnosedSampleData) =
     sample.Molecules.Counts
     |> Map.forall (fun mt count -> robot.Molecules.Counts.[mt] >= count)
 
-let getRequiredMolecule (robot : Robot) (sample : SampleData) =
+let getRequiredMolecule (robot : Robot) (sample : DiagnosedSampleData) =
     let ms =
         sample.Molecules.Counts
         |> Map.filter (fun mt count -> robot.Molecules.Counts.[mt] < count)
@@ -114,29 +141,30 @@ let getRequiredMolecule (robot : Robot) (sample : SampleData) =
     ms.Key
 
 let getMove (gs : GameState) =
-    let me = gs.Robots |> List.find (fun r -> r.Player = Player.Me)
-    let mySamples = gs.Samples |> List.filter (fun s -> s.CarriedBy = Player.Me)
-    let samplesReady = mySamples |> List.filter (canMakeSample me)
-    let cloudSamples = 
-        gs.Samples 
-        |> List.filter (fun s -> s.CarriedBy = Player.Cloud)
-        |> List.sortByDescending (fun s -> s.HealthPoints)
+    "WAIT"
+    // let me = gs.Robots |> List.find (fun r -> r.Player = Player.Me)
+    // let mySamples = gs.Samples |> List.filter (fun s -> s.CarriedBy = Player.Me)
+    // let samplesReady = mySamples |> List.filter (canMakeSample me)
+    // let cloudSamples = 
+    //     gs.Samples 
+    //     |> List.filter (fun s -> s.CarriedBy = Player.Cloud)
+    //     |> List.sortByDescending (fun s -> s.HealthPoints)
     
-    match mySamples.Length, samplesReady.Length, cloudSamples.Length, me.Location with
-    | _, sr, _, Module.Laboratory when sr > 0 -> 
-        produce samplesReady.Head
-    | _, sr, _, _  when sr > 0 -> 
-        goto Module.Laboratory
+    // match mySamples.Length, samplesReady.Length, cloudSamples.Length, me.Location with
+    // | _, sr, _, Module.Laboratory when sr > 0 -> 
+    //     produce samplesReady.Head
+    // | _, sr, _, _  when sr > 0 -> 
+    //     goto Module.Laboratory
 
-    | ms, _, cs, Module.Diagnosis when ms = 0 && cs > 0 -> 
-        collect cloudSamples.Head
-    | ms, _, cs, _ when ms = 0 && cs > 0 -> 
-        goto Module.Diagnosis
+    // | ms, _, cs, Module.Diagnosis when ms = 0 && cs > 0 -> 
+    //     collect cloudSamples.Head
+    // | ms, _, cs, _ when ms = 0 && cs > 0 -> 
+    //     goto Module.Diagnosis
 
-    | _, _, _, Module.Molecules -> 
-        gather (getRequiredMolecule me mySamples.Head)
-    | _, _, _, _ -> 
-        goto Module.Molecules
+    // | _, _, _, Module.Molecules -> 
+    //     gather (getRequiredMolecule me mySamples.Head)
+    // | _, _, _, _ -> 
+    //     goto Module.Molecules
 
 // ignore project count stuff for wood 2
 let projectCount = readInt()
@@ -157,6 +185,8 @@ while true do
         |> readNLines
         |> Array.map (tokenize >> SampleData.Create)
         |> Array.toList
+
+    eprintf "%A" samples
 
     let gameState = 
         { Robots = [me; enemy]
