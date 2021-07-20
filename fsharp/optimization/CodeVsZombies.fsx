@@ -9,8 +9,8 @@ module Types =
             X: float
             Y: float
         }
-        member this.ToInts() =
-            (Convert.ToInt32(this.X), Convert.ToInt32(this.Y))
+        static member ToInts point =
+            (Convert.ToInt32(point.X), Convert.ToInt32(point.Y))
 
     type Ash =
         {
@@ -177,7 +177,4 @@ module Main =
                 Zombies = zombies
             }
                 
-        let move = (getMove gameState).ToInts()
-
-        printfn "%i %i" (fst move) (snd move)
-        
+        gameState |> getMove |> Point.ToInts||> printfn "%i %i"
