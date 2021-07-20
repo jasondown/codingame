@@ -12,7 +12,7 @@ module Types =
         member this.ToInts() =
             (Convert.ToInt32(this.X), Convert.ToInt32(this.Y))
 
-    type Player =
+    type Ash =
         {
             Point: Point
         }
@@ -60,9 +60,14 @@ module Types =
                     }
             }
 
+    type Player = 
+        | Ash of Ash
+        | Human of Human
+        | Zombie of Zombie
+
     type GameState =
         {
-            Player: Player
+            Ash: Ash
             Humans: Human list
             Zombies: Zombie list
         }
@@ -91,42 +96,66 @@ module Move =
         let dist = (x + y) |> sqrt
         dist
 
+    let timeOnTarget (target: Player) (source: Player) =
+        match target, source with 
+        | Human h, Zombie z ->
+            (getDist z.Point h.Point ) / 400.
+        | Zombie z, Ash a ->
+            ((getDist a.Point z.Point) - 2000.) / 1000.
+        | x, y -> failwithf "ToT not implemented for %A %A" x y
+
+    let getSaveableHuman (me: Ash) (humans: Human list) (zombies: Zombie list) =
+        humans
+        |> List.filter (fun h ->
+            let zombieWinsRace = 
+                zombies
+                |> List.tryFind (fun z ->
+                    let ashTimeToZombie = timeOnTarget (Zombie z) (Ash me)
+                    let zombieTimeToHuman = timeOnTarget (Human h) (Zombie z)
+                    ashTimeToZombie > zombieTimeToHuman)
+            match zombieWinsRace with
+            | Some _ -> false
+            | None -> true)
+        |> List.tryHead
+
+    let getClosestZombie (me: Ash) (zombies: Zombie list) =
+        zombies
+        |> List.sortBy (fun z -> getDist me.Point z.Point)
+        |> List.tryHead
+
     let getMove (gs: GameState) =
         
-        let me = gs.Player
+        let me = gs.Ash
+        let humans = gs.Humans
+        let zombies = gs.Zombies
 
-        let distHumansToMe = 
-            gs.Humans
-            |> List.map (fun h -> (getDist h.Point me.Point), h)
-            |> List.sortBy fst
-        
-        let distHumansToZombiesAndHumansToMe =
-            gs.Humans
-            |> List.map (fun h ->
-                gs.Zombies
-                |> List.map (fun z -> (getDist h.Point z.Point), (getDist h.Point me.Point), h, z))
-            |> List.concat
-            |> List.sortBy (fun (_, distToMe, _, _) -> distToMe)
-        
-        // // move to closest human where I am closer than the closest zombie
-        // let candidates =
-        //     distHumansToZombiesAndHumansToMe
-        //     |> List.filter (fun (d2z, d2m, h, z) -> d2z >= d2m)
-        //     |> List.map (fun (_, _, h, _) -> h)
-            
-        // move to human where the human to me distance vs human to zombie distance is the least
-        let candidates =
-            distHumansToZombiesAndHumansToMe
-            |> List.sortBy (fun (d2z, d2m, h, z) -> 
-                let distdiff = abs(d2z - d2m)
-                eprintfn "%.0f %i %i" distdiff h.Id z.Id
-                distdiff)
-            |> List.map (fun (_, _, h, _) -> h)
+        let saveableHuman = getSaveableHuman me humans zombies
+        let closestZombie = getClosestZombie me zombies
+        let stillSaveableHuman =
+            match closestZombie with
+            | Some cz ->
+                let saveableHumanIfGoForZombie =
+                    let zombiesNextMove =
+                        zombies
+                        |> List.map (fun z -> {z with Point = z.NextPoint; })
+                    let ashNextMove =
+                        let D = sqrt (Math.Pow(cz.Point.X - me.Point.X, 2.) + (Math.Pow(cz.Point.Y - me.Point.Y, 2.)))
+                        let d = 1000.
+                        let newX = me.Point.X + (d/D) * (cz.Point.X - me.Point.X)
+                        let newY = me.Point.Y + (d/D) * (cz.Point.Y - me.Point.Y)
+                        {me with Point = {X = newX; Y = newY}}
+                    getSaveableHuman ashNextMove humans zombiesNextMove
 
-        candidates |> List.iter (fun c -> eprintfn "%i" c.Id)
+                match saveableHumanIfGoForZombie with
+                | Some _ -> true
+                | None -> false
+            | None -> true
 
-        candidates.Head.Point
-
+        match stillSaveableHuman, closestZombie, saveableHuman with
+        | true, Some cz, _ -> cz.Point
+        | false, _, Some sh -> sh.Point
+        | _, None, Some sh -> sh.Point
+        | _ -> { X=0.; Y=0.}
 
 module Main =
 
@@ -134,43 +163,21 @@ module Main =
     open Helpers
     open Move
 
-    let mutable previousMove: Point option = None
-
     (* game loop *)
     while true do
     
-        let player  = 1 |> create Player.Create |> List.head
+        let ash  = 1 |> create Ash.Create |> List.head
         let humans  = readInt() |> create Human.Create
         let zombies = readInt() |> create Zombie.Create
 
         let gameState =
             {
-                Player = player
+                Ash = ash
                 Humans = humans
                 Zombies = zombies
             }
                 
-        let move =
-            match previousMove with
-            | Some m -> 
-                let humans = gameState.Humans
-                let targetHumanDied =
-                    humans
-                    |> List.filter (fun h -> h.Point = m)
-                    |> List.isEmpty
+        let move = (getMove gameState).ToInts()
 
-                if targetHumanDied then
-                    let move' = getMove gameState
-                    previousMove <- Some(move')
-                    move'
-                else
-                    m
-
-            | None -> 
-                let move' = getMove gameState
-                previousMove <- Some(move')
-                move'
-
-        let command = move.ToInts()
-
-        printfn "%i %i" (fst command) (snd command)
+        printfn "%i %i" (fst move) (snd move)
+        
