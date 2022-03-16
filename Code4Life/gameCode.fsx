@@ -205,7 +205,7 @@ while true do
     let me = Robot.Create (tokenizeInput()) Player.Me
     let enemy = Robot.Create (tokenizeInput()) Player.Enemy
     
-    // ingore input for available molecules for wood 2
+    // ignore input for available molecules for wood 2
     let _ = readInput()
 
     let samples = 
