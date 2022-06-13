@@ -75,13 +75,25 @@ let getDesiredDirection landingArea lander =
 let isMovingToDesiredDirection landingArea lander =
     (getDesiredDirection landingArea lander) = lander.CurrentDirection
 
-let getDesiredAngle desiredSpeedX maxAngle landingX lander =
+let getIdealAngle (desiredAcceleration: int) (thrust: int) =
+        let thrust' = float thrust
+        let desiredAcceleration' = float desiredAcceleration
+        let accel = Math.Clamp(desiredAcceleration', -thrust', thrust'); // acceleration possible between -90 to +90 degrees
+        let desiredSine =  accel / thrust'; // -1 to +1
+        let angleInRadians = Math.Asin(desiredSine); // ArcSine is the inverse function of Sine
+        let angleInDegrees = angleInRadians / Math.PI * 180.0;
+        (int)angleInDegrees;
+
+let getDesiredAngle desiredSpeedX thrust maxAngle landingX lander =
     let desiredVelocity =
         desiredSpeedX
         * ((getDesiredDirection landingX lander) |> int)
 
     let desiredAcceleration = desiredVelocity - lander.HorizontalVelocity
-    - Math.Clamp(desiredAcceleration * 2, -maxAngle, +maxAngle)
+
+    let idealAngle = getIdealAngle desiredAcceleration thrust
+
+    - Math.Clamp(idealAngle, -maxAngle, +maxAngle)
 
 //----------------------------------------------
 
@@ -100,16 +112,16 @@ let getMove desiredInitialSpeed landingArea lander =
             else
                 4
 
-        let outputAngle = getDesiredAngle 0 33 landingArea.MiddleX lander
+        let outputAngle = getDesiredAngle 0 outputThrust 33 landingArea.MiddleX lander
         outputAngle, outputThrust
     else
         let outputThrust = if isMovingUp lander then 3 else 4
 
         let outputAngle =
             if isFar (getDistanceX landingArea.MiddleX lander.Pos.X) farDistance then
-                getDesiredAngle desiredInitialSpeed 60 landingArea.MiddleX lander
+                getDesiredAngle desiredInitialSpeed outputThrust 60 landingArea.MiddleX lander
             else
-                getDesiredAngle desiredSpeedWhenNear 45 landingArea.MiddleX lander
+                getDesiredAngle desiredSpeedWhenNear outputThrust 45 landingArea.MiddleX lander
 
         outputAngle, outputThrust
 
