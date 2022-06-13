@@ -80,7 +80,7 @@ My various solutions to [Codingame](https://www.codingame.com) puzzles.
   - [ ] Scala
   - [ ] Go
 - [Mars Lander - Episode 2](https://www.codingame.com/training/medium/mars-lander-episode-2)
-  - [ ] F#
+  - [x] F#
   - [ ] C#
   - [ ] Scala
   - [ ] Go
