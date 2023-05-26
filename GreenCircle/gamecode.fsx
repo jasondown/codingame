@@ -4,10 +4,14 @@ type Token = string array
 
 type GamePhase =
     | Move
+    | GiveCard
+    | PlayCard
     | Release
     static member Create =
         function
         | "MOVE" -> Move
+        | "GIVE_CARD" -> GiveCard
+        | "PLAY_CARD" -> PlayCard
         | "RELEASE" -> Release
         | x -> failwithf "Unknown Game Phase: %s" x
 
@@ -112,12 +116,20 @@ type Move =
     | Release of int
     | Random
     | Wait
+    | Training
+    | ArchitectureStudy
+    | CodeReview
+    | Refactoring
     override this.ToString() =
         match this with
         | Move i -> sprintf "MOVE %i" i
         | Release i -> sprintf "RELEASE %i" i
         | Random -> sprintf "RANDOM"
         | Wait -> sprintf "WAIT"
+        | Training -> sprintf "TRAINING"
+        | ArchitectureStudy -> sprintf "ARCHITECTURE_STUDY"
+        | CodeReview -> "CODE_REVIEW"
+        | Refactoring -> "REFACTORING"
 
     static member Create(s: string) =
         match s.Split ' ' |> Array.toList with
@@ -125,6 +137,10 @@ type Move =
         | "RELEASE" :: i :: _ -> Release(int i)
         | "WAIT" :: _ -> Wait
         | "RANDOM" :: _ -> Random
+        | "TRAINING" :: _ -> Training
+        | "ARCHITECTURE_STUDY" :: _ -> ArchitectureStudy
+        | "CODE_REVIEW" :: _ -> CodeReview
+        | "REFACTORING" :: _ -> Refactoring
         | x -> failwithf "Unrecognized Move: %A" x
 
 type Gamestate =
@@ -211,7 +227,7 @@ let getTargetDesk (gs: Gamestate) (targetApp: Application) (myCards: (Card * int
         targetApp.RequiredSkills
         |> Map.filter (fun sk _ -> skillCards |> List.exists (fun s -> s = sk) |> not)
         |> Seq.tryHead
-        |> Option.defaultValue (Collections.Generic.KeyValuePair.Create(Training, 0))
+        |> Option.defaultValue (Collections.Generic.KeyValuePair.Create(Skill.Training, 0))
 
     DeskLocation.Skill x.Key
 
