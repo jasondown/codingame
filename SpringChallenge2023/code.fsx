@@ -1,28 +1,60 @@
 open System
+open System.Collections.Generic
 
 type Token = string array
 
+type graph = Dictionary<int, int array>
+
+let newGraph = graph()
+
+let addNode index neighbours (g: graph) =
+    let ns = Array.filter (fun n -> n >= 0) neighbours
+    g.Add(index, ns)
+
+let getDistanceTableFrom (start: int) (g: graph) =
+    let distance : int array = Array.create g.Count -1
+    distance[start] <- 0
+    let searchQueue = Queue<int>()
+    searchQueue.Enqueue start
+    while searchQueue.Count > 0 do
+        let mutable size = searchQueue.Count
+        
+        while (size > 0) do
+            size <- size - 1
+            let vertex = searchQueue.Dequeue()
+            let adjVertices = g[vertex]
+            
+            for adjVertex in adjVertices do
+                if (distance[adjVertex] = -1) then
+                    distance[adjVertex] <- distance[vertex] + 1
+                    searchQueue.Enqueue adjVertex
+    distance
+
 type Resource = 
-    | Empty // 0 - does not contain a resource
-    | Egg // 1 - ignored for wood league 2
-    | Crystal // 2 - contains crystal resource
-    static member Create =
-        function
-        | 0 -> Empty
-        | 1 -> Egg
-        | 2 -> Crystal
-        | i -> failwithf "Unknown value when parsing Resource: %i" i
+    | Empty
+    | Egg of int
+    | Crystal of int
+    static member Create (t, v) =
+        match t, v with
+        | 0, _ -> Empty
+        | 1, v -> Egg v
+        | 2, v -> Crystal v
+        | i, _ -> failwithf "Unknown value when parsing Resource: %i" i
+    member x.Update amount =
+        match x with
+        | Empty -> x
+        | Egg _ -> Egg amount
+        | Crystal _ -> Crystal amount
 
 type InitialInputToken = 
     {
         Resource: Resource
-        Amount: int
-        // 6 x Neigh - Ignored for wood league 2
+        Neighbours: int array
     }
     static member Create (token: Token) =
         {
-            Resource = token[0] |> int |> Resource.Create
-            Amount = token[1] |> int
+            Resource = Resource.Create (token[0] |> int, token[1] |> int)
+            Neighbours = (token[2..7]) |> Array.map int            
         }
 
 type GameTurnToken =
@@ -46,19 +78,16 @@ type Cell =
     {
         Index: int
         Resource: Resource
-        Amount: int
         AntBase: AntBase option
+        Neighbours: int array
     }
     static member Create (index: int) (token: InitialInputToken) =
         {
             Index = index
             Resource = token.Resource
-            Amount = token.Amount
             AntBase = None
+            Neighbours = token.Neighbours
         }
-
-
-//type Ant = ???
 
 type Beacon = 
     {
@@ -85,6 +114,7 @@ type Action =
         | Wait -> failwith "NotImplemented"
         | Message(_) -> failwith "NotImplemented"
 
+
 // helper functions
 let readInput () = Console.ReadLine()
 let readInt = readInput >> int
@@ -92,6 +122,7 @@ let tokenize (line : string) = line.Split ' '
 let tokenizeInput = readInput >> tokenize
 let readIndices = tokenizeInput >> Array.map int
 let readNLines n = Array.init n (fun _ -> readInput())
+let tokenizeNLines n : (Token array) = Array.init n (fun _ -> tokenizeInput())
 
 // Main functions
 let updateAntBases antbase (cells: Cell array) indices =
@@ -100,55 +131,129 @@ let updateAntBases antbase (cells: Cell array) indices =
 
 let updateMap (tokens: GameTurnToken array) (cells: Cell array) =
     cells
-    |> Array.iteri (fun idx cell -> cells[idx] <- { cell with Amount = tokens[idx].ResourceAmount })
+    |> Array.iteri (fun idx cell -> cells[idx] <- { cell with Resource = cell.Resource.Update tokens[idx].ResourceAmount })
 
 let getResourceCells (cells: Cell array) =
-    cells |> Array.filter(fun cell -> cell.Resource = Crystal && cell.Amount > 0)
+    cells |> Array.filter(fun cell -> 
+        match cell.Resource with
+        | Crystal amount when amount > 0 -> true
+        | Egg amount when amount > 0 -> true
+        | _ -> false)
 
-let getActions myBase (targetCells: Cell array) =
-    // Simple strategy at beginning:
-    // Put a beacon on each cell with a resource, with highest strength on highest resource amount
-    targetCells
-    |> Array.sortBy (fun cell -> cell.Amount)
-    |> Array.mapi (fun i cell -> PlaceBeaconLine { Start = myBase; End = cell; Strength = i } )
+let getActions (myBases: Cell array) (targetCells: Cell array) (g:graph) =
 
-let formatOutput (actions: Action array) =
+    let distanceTable1 = getDistanceTableFrom myBases[0].Index g
+
+    let eggTargets1 =
+        targetCells
+        |> Array.filter (fun c -> 
+            match c.Resource with
+            | Egg amount when amount > 0 -> true
+            | _ -> false)
+        |> Array.map (fun c -> c, distanceTable1[c.Index])
+            |> Array.sortBy (fun (c, d) -> 
+                let a = 
+                    match c.Resource with
+                    | Crystal amount -> amount
+                    | _ -> 0
+                d, -a)
+        |> Array.map fst
+        //|> Array.take 3
+        |> Array.map (fun cell -> PlaceBeaconLine {Start = myBases[0]; End = cell; Strength = 2})
+
+    let crystalTargets1 =
+        targetCells
+        |> Array.filter (fun c -> 
+            match c.Resource with
+            | Crystal amount when amount > 0 -> true
+            | _ -> false)
+        |> Array.map (fun c -> c, distanceTable1[c.Index])
+        |> Array.sortBy (fun (c, d) -> 
+            let a = 
+                match c.Resource with
+                | Crystal amount -> amount
+                | _ -> 0
+            d, -a)
+        |> Array.map fst
+        //|> Array.take 3
+        |> Array.map (fun cell ->  PlaceBeaconLine {Start = myBases[0]; End = cell; Strength = 1})
+
+    let mutable targets = [| eggTargets1; crystalTargets1 |]
+
+    if myBases.Length > 1 then
+        let distanceTable2 = getDistanceTableFrom myBases[1].Index g
+
+        let eggTargets2=
+            targetCells
+            |> Array.filter (fun c -> 
+                match c.Resource with
+                | Egg amount when amount > 0 -> true
+                | _ -> false)
+            |> Array.map (fun c -> c, distanceTable2[c.Index])
+                |> Array.sortBy (fun (c, d) -> 
+                    let a = 
+                        match c.Resource with
+                        | Crystal amount -> amount
+                        | _ -> 0
+                    d, -a)
+            |> Array.map fst
+            //|> Array.take 2
+            |> Array.map (fun cell -> PlaceBeaconLine {Start = myBases[1]; End = cell; Strength = 2})
+
+        let crystalTargets2 =
+            targetCells
+            |> Array.filter (fun c -> 
+                match c.Resource with
+                | Crystal amount when amount > 0 -> true
+                | _ -> false)
+            |> Array.map (fun c -> c, distanceTable2[c.Index])
+            |> Array.sortBy (fun (c, d) -> 
+                let a = 
+                    match c.Resource with
+                    | Crystal amount -> amount
+                    | _ -> 0
+                d, -a)
+            |> Array.map fst
+            //|> Array.take 3
+            |> Array.map (fun cell ->  PlaceBeaconLine {Start = myBases[1]; End = cell; Strength = 1})
+
+        targets <- [|eggTargets1; eggTargets2; crystalTargets1; crystalTargets2|]
+
+    targets |> Array.collect id |> Array.toList
+
+let formatOutput (actions: Action list) =
     actions
-    |> Array.map (fun a -> a.ToString())
+    |> List.map (fun a -> a.ToString())
     |> String.concat ";"
 
 // Initial game input
 let numberOfCells = readInt ()
 let cells = 
     numberOfCells
-    |> readNLines
-    |> Array.mapi (fun idx text -> 
-        let token = (tokenize text) |> InitialInputToken.Create
-        Cell.Create idx token)
+    |> tokenizeNLines 
+    |> Array.mapi (fun idx token -> Cell.Create idx (InitialInputToken.Create token))
     
+let graph = newGraph
+cells |> Array.iter (fun c -> addNode c.Index c.Neighbours graph)
+
 let _numberOfBases = readInt () // number of bases for each team... not using at the moment
 
 readIndices() |> updateAntBases Mine cells
 readIndices() |> updateAntBases Enemy cells
 
-//eprintfn "%A" cells
+let myBases = cells |> Array.filter (fun cell -> cell.AntBase = Some Mine) // single base for now
 
 // Game loop
 while true do
 
     let gameturnTokens =
         numberOfCells
-        |> readNLines
-        |> Array.map (tokenize >> GameTurnToken.Create)
+        |> tokenizeNLines
+        |> Array.map (GameTurnToken.Create)
 
     updateMap gameturnTokens cells
 
-    let myBase = cells |> Array.find (fun cell -> cell.AntBase = Some Mine) // single base for now
-
-    let actions =
-        cells
-        |> getResourceCells
-        |> getActions myBase
+    let actions = getActions myBases cells graph
 
     //eprintfn "%A" actions
 
